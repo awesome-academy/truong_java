@@ -8,9 +8,9 @@
 ## PHASE 1 — Project Foundation
 
 ### T01 — Project Setup
-- [ ] Tạo project qua Spring Initializr (xem hướng dẫn bên dưới)
-- [ ] Cấu hình `application.yml`: datasource, JPA, JWT secret/expiry, OAuth2 credentials
-- [ ] Tạo package structure:
+- [x] Tạo project qua Spring Initializr (xem hướng dẫn bên dưới)
+- [x] Cấu hình `application.properties`: datasource, JPA, timezone
+- [x] Tạo package structure:
   ```
   com.sun.booking
   ├── config/
@@ -26,11 +26,11 @@
   ├── exception/
   └── util/
   ```
-- [ ] Tạo `ApiResponse<T>` wrapper cho tất cả response
-- [ ] Tạo `GlobalExceptionHandler` (`@RestControllerAdvice`)
-- [ ] Tạo các custom exception: `ResourceNotFoundException`, `BusinessException`, `UnauthorizedException`
-- [ ] Chạy `schema.sql` lên PostgreSQL (Flyway migration hoặc chạy tay)
-- [ ] Verify kết nối DB thành công khi start app
+- [x] Tạo `ApiResponse<T>` wrapper cho tất cả response
+- [x] Tạo `GlobalExceptionHandler` (`@RestControllerAdvice`)
+- [x] Tạo các custom exception: `ResourceNotFoundException`, `BusinessException`, `UnauthorizedException`
+- [x] Chạy `schema.sql` lên PostgreSQL (Flyway migration)
+- [x] Verify kết nối DB thành công khi start app
 
 ---
 
@@ -346,7 +346,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 1 — Foundation | T01 | ⬜ |
+| 1 — Foundation | T01 | ✅ |
 | 2 — Auth & User | T02, T03, T04, T05 | ⬜ |
 | 3 — Category & Tour | T06, T07, T08, T09 | ⬜ |
 | 4 — Booking & Payment | T10, T11 | ⬜ |
