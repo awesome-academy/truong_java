@@ -111,6 +111,28 @@ private UUID targetId;          // ID của target tương ứng
 
 > Nếu không có `@Builder.Default`, `@Builder` sẽ bỏ qua giá trị khởi tạo và dùng default của Java (`null`, `false`, `0`).
 
+### 2.1 Tại sao JPA Entity không dùng `@Data`?
+
+`@Data` = `@Getter` + `@Setter` + `@ToString` + `@EqualsAndHashCode` + `@RequiredArgsConstructor`
+
+Nghe tiện, nhưng 2 cái cuối gây vấn đề với JPA:
+
+**Vấn đề 1: `@EqualsAndHashCode`**
+Generate `equals()` và `hashCode()` dựa trên **tất cả fields**, kể cả các collection (`@OneToMany`, `@ManyToMany`).
+Khi JPA chưa fetch lazy collection mà gọi `equals()` → trigger lazy load ngoài transaction → crash `LazyInitializationException`.
+
+**Vấn đề 2: `@ToString`**
+Generate `toString()` bao gồm tất cả fields. Nếu có quan hệ `@OneToMany` → có thể trigger fetch toàn bộ danh sách con → **N+1 query** hoặc **StackOverflowError** nếu 2 entity reference lẫn nhau.
+
+**Kết luận:**
+
+| Annotation | JPA Entity | DTO |
+|---|---|---|
+| `@Getter` + `@Setter` | ✅ An toàn | ✅ OK |
+| `@Data` | ❌ Tránh dùng | ✅ Dùng được |
+
+DTO không có quan hệ JPA, không có lazy load → `@Data` dùng thoải mái.
+
 ---
 
 ## 3. Flyway

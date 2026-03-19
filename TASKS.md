@@ -60,16 +60,16 @@
 - [ ] Test flow: `GET /oauth2/authorize/{provider}` → callback → JWT
 
 ### T04 — User Profile
-- [ ] `GET /api/users/me` — trả thông tin profile của user đang đăng nhập
-- [ ] `PUT /api/users/me` — cập nhật `full_name`, `phone`, `avatar_url`
-- [ ] `PUT /api/users/me/password` — đổi mật khẩu (validate old password trước)
+- [x] `GET /api/users/me` — trả thông tin profile của user đang đăng nhập
+- [x] `PUT /api/users/me` — cập nhật `full_name`, `phone`, `avatar_url`
+- [x] `PUT /api/users/me/password` — đổi mật khẩu (validate old password trước)
 
 ### T05 — Bank Account
-- [ ] `GET /api/users/me/bank-accounts` — list tài khoản ngân hàng
-- [ ] `POST /api/users/me/bank-accounts` — thêm mới
-- [ ] `PUT /api/users/me/bank-accounts/{id}` — cập nhật
-- [ ] `DELETE /api/users/me/bank-accounts/{id}` — xóa (chỉ được xóa của mình)
-- [ ] `PATCH /api/users/me/bank-accounts/{id}/default` — đặt làm mặc định (unset cái cũ)
+- [x] `GET /api/users/me/bank-accounts` — list tài khoản ngân hàng
+- [x] `POST /api/users/me/bank-accounts` — thêm mới
+- [x] `PUT /api/users/me/bank-accounts/{id}` — cập nhật
+- [x] `DELETE /api/users/me/bank-accounts/{id}` — xóa (chỉ được xóa của mình)
+- [x] `PATCH /api/users/me/bank-accounts/{id}/default` — đặt làm mặc định (unset cái cũ)
 
 ---
 
@@ -347,7 +347,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | Phase | Tasks | Status |
 |---|---|---|
 | 1 — Foundation | T01 | ✅ |
-| 2 — Auth & User | T02, T03, T04, T05 | 🔄 |
+| 2 — Auth & User | T02, T03, T04, T05 | ✅ T02 T04 T05 · ⬜ T03 |
 | 3 — Category & Tour | T06, T07, T08, T09 | ⬜ |
 | 4 — Booking & Payment | T10, T11 | ⬜ |
 | 5 — Social | T12, T13, T14, T15, T16 | ⬜ |
