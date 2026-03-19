@@ -52,6 +52,9 @@ public class User {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;    // Soft delete: xóa thì set giá trị này thay vì DELETE khỏi DB
 
+    @Column(name = "refresh_token", columnDefinition = "TEXT")
+    private String refreshToken;        // Lưu refresh token hiện tại, logout thì set null
+
     @PrePersist     // Hook: tự động chạy trước khi INSERT vào DB
     protected void onCreate() {
         createdAt = LocalDateTime.now();

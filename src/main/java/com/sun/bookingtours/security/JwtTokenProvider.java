@@ -1,0 +1,87 @@
+package com.sun.bookingtours.security;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
+import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+
+@Slf4j
+@Component
+public class JwtTokenProvider {
+
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${app.jwt.expiration-ms}")
+    private long jwtExpirationMs;
+
+    @Value("${app.jwt.refresh-expiration-ms}")
+    private long refreshExpirationMs;
+
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateAccessToken(Authentication authentication) {
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+
+        return Jwts.builder()
+                .subject(userPrincipal.getEmail())
+                .claim("userId", userPrincipal.getId())
+                .claim("role", userPrincipal.getRole())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(String email) {
+        return Jwts.builder()
+                .subject(email)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String getEmailFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.error("JWT token expired: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.error("JWT token unsupported: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            log.error("JWT token malformed: {}", e.getMessage());
+        } catch (SignatureException e) {
+            log.error("JWT signature invalid: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.error("JWT claims empty: {}", e.getMessage());
+        }
+        return false;
+    }
+}

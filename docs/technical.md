@@ -245,3 +245,149 @@ Client nhận: { "success": false, "message": "Không đủ slot" }
 | `ResourceNotFoundException` | 404 Not Found |
 | `BusinessException` | 400 Bad Request |
 | `UnauthorizedException` | 401 Unauthorized |
+
+---
+
+## 6. Spring Security & JWT
+
+### 6.1 Các file liên quan
+
+| File | Làm gì |
+|---|---|
+| [SecurityConfig.java](../src/main/java/com/sun/bookingtours/config/SecurityConfig.java) | Cấu hình filter chain, phân quyền route, khai báo beans |
+| [JwtTokenProvider.java](../src/main/java/com/sun/bookingtours/security/JwtTokenProvider.java) | Generate / validate / parse JWT token |
+| [JwtAuthenticationFilter.java](../src/main/java/com/sun/bookingtours/security/JwtAuthenticationFilter.java) | Chạy trước mỗi request, đọc token từ header và set user vào SecurityContext |
+| [UserPrincipal.java](../src/main/java/com/sun/bookingtours/security/UserPrincipal.java) | Wrapper của `User` entity, implements `UserDetails` để Spring Security hiểu |
+| [UserDetailsServiceImpl.java](../src/main/java/com/sun/bookingtours/security/UserDetailsServiceImpl.java) | Load user từ DB theo email khi Spring Security cần xác thực |
+| [AuthService.java](../src/main/java/com/sun/bookingtours/service/AuthService.java) | Business logic: register, login, refresh, logout |
+| [AuthController.java](../src/main/java/com/sun/bookingtours/controller/AuthController.java) | Expose 4 endpoint: `POST /api/auth/*` |
+
+---
+
+### 6.2 Tổng quan flow
+
+```
+Request → [JwtAuthenticationFilter] → [AuthorizationFilter] → Controller
+```
+
+- **Public route** (`/api/auth/**`, `GET /api/tours/**`...): filter bỏ qua, không cần token
+- **Protected route**: filter đọc token → validate → load user → set vào `SecurityContextHolder`
+- **Admin route** (`/api/admin/**`): sau filter còn check thêm `ROLE_ADMIN`
+
+---
+
+### 6.3 JWT — Cấu trúc token
+
+```
+xxxxx.yyyyy.zzzzz
+  |      |      |
+Header  Payload  Signature
+```
+
+- **Payload** chứa: `email`, `userId`, `role`, `exp` (thời gian hết hạn)
+- **Signature** = HMAC-SHA256(header + payload, secretKey) — chỉ server biết key → không thể giả mạo
+- Token là **public** (ai cũng decode được) → không được nhét password hay data nhạy cảm vào
+
+**Access token** — sống 15 phút, gửi kèm mỗi request
+**Refresh token** — sống 7 ngày, chỉ dùng để lấy access token mới. Lưu vào DB để có thể invalidate khi logout.
+
+---
+
+### 6.4 Data flow: Register
+
+```
+Client                          AuthController              AuthService                  DB
+  |                                   |                          |                        |
+  |-- POST /api/auth/register ------> |                          |                        |
+  |   { fullName, email, password }   |                          |                        |
+  |                                   |-- authService.register() |                        |
+  |                                   |                          |-- existsByEmail() ----> |
+  |                                   |                          | <-- false ------------- |
+  |                                   |                          |                        |
+  |                                   |                          | BCrypt.encode(password) |
+  |                                   |                          |                        |
+  |                                   |                          |-- userRepo.save() ----> |
+  |                                   |                          | <-- User (có id) ------- |
+  |                                   |                          |                        |
+  |                                   |                          | generateAccessToken()   |
+  |                                   |                          | generateRefreshToken()  |
+  |                                   |                          |-- save refreshToken --> |
+  |                                   |                          |                        |
+  | <-- 200 { accessToken,            | <-- AuthResponse ------- |                        |
+  |           refreshToken }          |                          |                        |
+```
+
+**Các bước:**
+1. `@Valid` kiểm tra input: email đúng format, password ≥ 6 ký tự → sai: trả 400 ngay
+2. `existsByEmail()` → email tồn tại rồi: throw `BusinessException` → 400
+3. `BCrypt.encode()` → hash password trước khi lưu, không bao giờ lưu plain-text
+4. `userRepo.save()` → INSERT, `@PrePersist` tự set `createdAt`, `updatedAt`
+5. `generateTokens()` → tạo cặp token, lưu refresh token vào DB
+
+---
+
+### 6.5 Data flow: Login
+
+```
+Client                          AuthController              AuthService                  DB
+  |                                   |                          |                        |
+  |-- POST /api/auth/login ---------->|                          |                        |
+  |   { email, password }             |                          |                        |
+  |                                   |-- authService.login()    |                        |
+  |                                   |              AuthenticationManager.authenticate() |
+  |                                   |                          | loadUserByUsername()    |
+  |                                   |                          |-- findByEmail() ------> |
+  |                                   |                          | <-- User -------------- |
+  |                                   |                          |                        |
+  |                                   |                          | BCrypt.matches()        |
+  |                                   |                          | → sai: 401              |
+  |                                   |                          | → đúng: Authentication  |
+  |                                   |                          |                        |
+  |                                   |                          | generateAccessToken()   |
+  |                                   |                          | generateRefreshToken()  |
+  |                                   |                          |-- save refreshToken --> |
+  |                                   |                          |                        |
+  | <-- 200 { accessToken,            | <-- AuthResponse ------- |                        |
+  |           refreshToken }          |                          |                        |
+```
+
+**Các bước:**
+1. `AuthenticationManager.authenticate()` — Spring Security tự gọi `loadUserByUsername(email)` ngầm
+2. `BCrypt.matches(rawPassword, hash)` — sai: throw `BadCredentialsException` → 401
+3. Đúng → lấy `UserPrincipal` từ `Authentication` → generate token
+4. Lưu refresh token mới vào DB (ghi đè nếu login lại)
+
+---
+
+### 6.6 Data flow: Mọi request sau khi đã login
+
+```
+Client                    JwtAuthenticationFilter       UserDetailsService        Controller
+  |                               |                            |                      |
+  |-- GET /api/bookings --------> |                            |                      |
+  |   Authorization: Bearer xxx   |                            |                      |
+  |                               | extractToken() → "xxx"     |                      |
+  |                               | validateToken() → true     |                      |
+  |                               | getEmailFromToken()        |                      |
+  |                               | → "test@gmail.com"         |                      |
+  |                               |                            |                      |
+  |                               |-- loadUserByUsername() --> |                      |
+  |                               | <-- UserPrincipal -------- |                      |
+  |                               |                            |                      |
+  |                               | SecurityContextHolder      |                      |
+  |                               | .setAuthentication()       |                      |
+  |                               |                            |                      |
+  |                               |-------- filterChain.doFilter() ----------------> |
+  |                               |                            |        xử lý request |
+  | <---------------------------------------- 200 response ----------------------- < |
+```
+
+`SecurityContextHolder` lưu theo **thread-local** — chỉ sống trong request hiện tại, không share giữa các request. Đây là lý do mỗi request đều phải gửi kèm token.
+
+---
+
+### 6.7 BCrypt
+
+- `encode("rawPassword")` → hash khác nhau mỗi lần (do salt ngẫu nhiên)
+- `matches("rawPassword", hash)` → `true/false`
+- **Không bao giờ lưu plain-text password vào DB**

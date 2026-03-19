@@ -37,19 +37,19 @@
 ## PHASE 2 — Auth & User
 
 ### T02 — JWT Authentication
-- [ ] Thêm dependency `jjwt` vào `pom.xml`
-- [ ] Tạo `JwtTokenProvider`: generate, validate, parse token
-- [ ] Tạo `JwtAuthenticationFilter` (extends `OncePerRequestFilter`)
-- [ ] Cấu hình `SecurityFilterChain`:
+- [x] Thêm dependency `jjwt` vào `pom.xml`
+- [x] Tạo `JwtTokenProvider`: generate, validate, parse token
+- [x] Tạo `JwtAuthenticationFilter` (extends `OncePerRequestFilter`)
+- [x] Cấu hình `SecurityFilterChain`:
   - Public routes: `/api/auth/**`, `GET /api/tours/**`, `GET /api/places/**`, `GET /api/foods/**`, `GET /api/news/**`, `GET /api/reviews/**`, `GET /api/categories/**`
   - USER routes: `/api/bookings/**`, `/api/payments/**`, `/api/reviews/**` (POST/PUT/DELETE), `/api/comments/**`, `/api/users/me/**`
   - ADMIN routes: `/api/admin/**`
-- [ ] `UserDetailsService` load user by email từ DB
-- [ ] Tạo `UserPrincipal` (implements `UserDetails`)
-- [ ] `POST /api/auth/register` — tạo user mới (role=USER, is_active=true)
-- [ ] `POST /api/auth/login` — xác thực, trả `accessToken` + `refreshToken`
-- [ ] `POST /api/auth/refresh` — validate refresh token, cấp access token mới
-- [ ] `POST /api/auth/logout` — invalidate refresh token
+- [x] `UserDetailsService` load user by email từ DB
+- [x] Tạo `UserPrincipal` (implements `UserDetails`)
+- [x] `POST /api/auth/register` — tạo user mới (role=USER, is_active=true)
+- [x] `POST /api/auth/login` — xác thực, trả `accessToken` + `refreshToken`
+- [x] `POST /api/auth/refresh` — validate refresh token, cấp access token mới
+- [x] `POST /api/auth/logout` — invalidate refresh token
 
 ### T03 — OAuth2 Login
 - [ ] Thêm dependency `spring-boot-starter-oauth2-client`
@@ -347,7 +347,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | Phase | Tasks | Status |
 |---|---|---|
 | 1 — Foundation | T01 | ✅ |
-| 2 — Auth & User | T02, T03, T04, T05 | ⬜ |
+| 2 — Auth & User | T02, T03, T04, T05 | 🔄 |
 | 3 — Category & Tour | T06, T07, T08, T09 | ⬜ |
 | 4 — Booking & Payment | T10, T11 | ⬜ |
 | 5 — Social | T12, T13, T14, T15, T16 | ⬜ |
