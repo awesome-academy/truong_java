@@ -77,11 +77,11 @@
           "name": "Refresh Token",
           "request": {
             "method": "POST",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/refresh?refreshToken={{refreshToken}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "refresh"],
-              "query": [{ "key": "refreshToken", "value": "{{refreshToken}}" }]
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
             }
           },
           "event": [
@@ -103,11 +103,11 @@
           "name": "Logout",
           "request": {
             "method": "POST",
-            "url": {
-              "raw": "{{baseUrl}}/api/auth/logout?refreshToken={{refreshToken}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "logout"],
-              "query": [{ "key": "refreshToken", "value": "{{refreshToken}}" }]
+            "url": "{{baseUrl}}/api/auth/logout",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
             }
           }
         }

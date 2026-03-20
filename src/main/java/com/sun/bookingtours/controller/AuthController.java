@@ -1,6 +1,7 @@
 package com.sun.bookingtours.controller;
 
 import com.sun.bookingtours.dto.request.LoginRequest;
+import com.sun.bookingtours.dto.request.RefreshTokenRequest;
 import com.sun.bookingtours.dto.request.RegisterRequest;
 import com.sun.bookingtours.dto.response.ApiResponse;
 import com.sun.bookingtours.dto.response.AuthResponse;
@@ -30,14 +31,13 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<AuthResponse>> refresh(@RequestParam String refreshToken) {
-        // refreshToken truyền qua query param: POST /api/auth/refresh?refreshToken=xxx
-        return ResponseEntity.ok(ApiResponse.success(authService.refresh(refreshToken)));
+    public ResponseEntity<ApiResponse<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.refresh(request.getRefreshToken())));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(@RequestParam String refreshToken) {
-        authService.logout(refreshToken);
+    public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

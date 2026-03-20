@@ -1,6 +1,7 @@
 package com.sun.bookingtours.exception;
 
 import com.sun.bookingtours.dto.response.ApiResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -8,6 +9,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Bắt unique/fk/not-null constraint violation từ DB
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<?>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = ex.getMostSpecificCause().getMessage();
+        if (message != null && message.contains("users_email_key")) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Email already in use"));
+        }
+        return ResponseEntity.badRequest().body(ApiResponse.error("Data integrity violation"));
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<?>> handleBusinessException(BusinessException ex) {
         ApiResponse<?> response = ApiResponse.error(ex.getMessage());

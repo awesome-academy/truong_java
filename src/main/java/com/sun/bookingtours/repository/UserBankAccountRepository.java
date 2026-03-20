@@ -2,6 +2,8 @@ package com.sun.bookingtours.repository;
 
 import com.sun.bookingtours.entity.UserBankAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +19,9 @@ public interface UserBankAccountRepository extends JpaRepository<UserBankAccount
     // → đảm bảo user chỉ thao tác được account của chính mình
     Optional<UserBankAccount> findByIdAndUserId(UUID id, UUID userId);
 
-    // Tìm account đang là default của user
-    // findBy + UserId + IsDefault → WHERE user_id = ? AND is_default = ?
-    Optional<UserBankAccount> findByUserIdAndIsDefault(UUID userId, boolean isDefault);
+    // Unset tất cả default của user trong 1 câu UPDATE
+    // Dùng trước khi set default mới → tránh race condition nhiều row cùng is_default = true
+    @Modifying
+    @Query("UPDATE UserBankAccount a SET a.isDefault = false WHERE a.user.id = :userId")
+    void clearDefaultByUserId(UUID userId);
 }

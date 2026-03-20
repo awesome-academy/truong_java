@@ -4,8 +4,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +28,15 @@ public class JwtTokenProvider {
     @Value("${app.jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
+    @PostConstruct
+    private void validateSecret() {
+        if (jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET must be at least 32 characters");
+        }
+    }
+
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public String generateAccessToken(Authentication authentication) {
@@ -72,15 +78,15 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("JWT token expired: {}", e.getMessage());
+            log.debug("JWT token expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("JWT token unsupported: {}", e.getMessage());
+            log.warn("JWT token unsupported: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            log.error("JWT token malformed: {}", e.getMessage());
+            log.warn("JWT token malformed: {}", e.getMessage());
         } catch (SignatureException e) {
-            log.error("JWT signature invalid: {}", e.getMessage());
+            log.warn("JWT signature invalid: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("JWT claims empty: {}", e.getMessage());
+            log.warn("JWT claims empty: {}", e.getMessage());
         }
         return false;
     }

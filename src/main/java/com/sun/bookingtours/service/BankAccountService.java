@@ -73,9 +73,8 @@ public class BankAccountService {
         // Tìm account cần set default (validate ownership luôn)
         UserBankAccount account = findAccountByIdAndUser(accountId, principal.getId());
 
-        // Unset account đang là default hiện tại (nếu có)
-        bankAccountRepository.findByUserIdAndIsDefault(principal.getId(), true)
-                .ifPresent(current -> current.setDefault(false));  // dirty checking tự UPDATE
+        // Unset toàn bộ default của user bằng 1 câu UPDATE → tránh race condition
+        bankAccountRepository.clearDefaultByUserId(principal.getId());
 
         account.setDefault(true);
 
