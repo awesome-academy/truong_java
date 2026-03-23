@@ -8,9 +8,9 @@
 ## PHASE 1 — Project Foundation
 
 ### T01 — Project Setup
-- [ ] Tạo project qua Spring Initializr (xem hướng dẫn bên dưới)
-- [ ] Cấu hình `application.yml`: datasource, JPA, JWT secret/expiry, OAuth2 credentials
-- [ ] Tạo package structure:
+- [x] Tạo project qua Spring Initializr (xem hướng dẫn bên dưới)
+- [x] Cấu hình `application.properties`: datasource, JPA, timezone
+- [x] Tạo package structure:
   ```
   com.sun.booking
   ├── config/
@@ -26,30 +26,30 @@
   ├── exception/
   └── util/
   ```
-- [ ] Tạo `ApiResponse<T>` wrapper cho tất cả response
-- [ ] Tạo `GlobalExceptionHandler` (`@RestControllerAdvice`)
-- [ ] Tạo các custom exception: `ResourceNotFoundException`, `BusinessException`, `UnauthorizedException`
-- [ ] Chạy `schema.sql` lên PostgreSQL (Flyway migration hoặc chạy tay)
-- [ ] Verify kết nối DB thành công khi start app
+- [x] Tạo `ApiResponse<T>` wrapper cho tất cả response
+- [x] Tạo `GlobalExceptionHandler` (`@RestControllerAdvice`)
+- [x] Tạo các custom exception: `ResourceNotFoundException`, `BusinessException`, `UnauthorizedException`
+- [x] Chạy `schema.sql` lên PostgreSQL (Flyway migration)
+- [x] Verify kết nối DB thành công khi start app
 
 ---
 
 ## PHASE 2 — Auth & User
 
 ### T02 — JWT Authentication
-- [ ] Thêm dependency `jjwt` vào `pom.xml`
-- [ ] Tạo `JwtTokenProvider`: generate, validate, parse token
-- [ ] Tạo `JwtAuthenticationFilter` (extends `OncePerRequestFilter`)
-- [ ] Cấu hình `SecurityFilterChain`:
+- [x] Thêm dependency `jjwt` vào `pom.xml`
+- [x] Tạo `JwtTokenProvider`: generate, validate, parse token
+- [x] Tạo `JwtAuthenticationFilter` (extends `OncePerRequestFilter`)
+- [x] Cấu hình `SecurityFilterChain`:
   - Public routes: `/api/auth/**`, `GET /api/tours/**`, `GET /api/places/**`, `GET /api/foods/**`, `GET /api/news/**`, `GET /api/reviews/**`, `GET /api/categories/**`
   - USER routes: `/api/bookings/**`, `/api/payments/**`, `/api/reviews/**` (POST/PUT/DELETE), `/api/comments/**`, `/api/users/me/**`
   - ADMIN routes: `/api/admin/**`
-- [ ] `UserDetailsService` load user by email từ DB
-- [ ] Tạo `UserPrincipal` (implements `UserDetails`)
-- [ ] `POST /api/auth/register` — tạo user mới (role=USER, is_active=true)
-- [ ] `POST /api/auth/login` — xác thực, trả `accessToken` + `refreshToken`
-- [ ] `POST /api/auth/refresh` — validate refresh token, cấp access token mới
-- [ ] `POST /api/auth/logout` — invalidate refresh token
+- [x] `UserDetailsService` load user by email từ DB
+- [x] Tạo `UserPrincipal` (implements `UserDetails`)
+- [x] `POST /api/auth/register` — tạo user mới (role=USER, is_active=true)
+- [x] `POST /api/auth/login` — xác thực, trả `accessToken` + `refreshToken`
+- [x] `POST /api/auth/refresh` — validate refresh token, cấp access token mới
+- [x] `POST /api/auth/logout` — invalidate refresh token
 
 ### T03 — OAuth2 Login
 - [ ] Thêm dependency `spring-boot-starter-oauth2-client`
@@ -60,16 +60,16 @@
 - [ ] Test flow: `GET /oauth2/authorize/{provider}` → callback → JWT
 
 ### T04 — User Profile
-- [ ] `GET /api/users/me` — trả thông tin profile của user đang đăng nhập
-- [ ] `PUT /api/users/me` — cập nhật `full_name`, `phone`, `avatar_url`
-- [ ] `PUT /api/users/me/password` — đổi mật khẩu (validate old password trước)
+- [x] `GET /api/users/me` — trả thông tin profile của user đang đăng nhập
+- [x] `PUT /api/users/me` — cập nhật `full_name`, `phone`, `avatar_url`
+- [x] `PUT /api/users/me/password` — đổi mật khẩu (validate old password trước)
 
 ### T05 — Bank Account
-- [ ] `GET /api/users/me/bank-accounts` — list tài khoản ngân hàng
-- [ ] `POST /api/users/me/bank-accounts` — thêm mới
-- [ ] `PUT /api/users/me/bank-accounts/{id}` — cập nhật
-- [ ] `DELETE /api/users/me/bank-accounts/{id}` — xóa (chỉ được xóa của mình)
-- [ ] `PATCH /api/users/me/bank-accounts/{id}/default` — đặt làm mặc định (unset cái cũ)
+- [x] `GET /api/users/me/bank-accounts` — list tài khoản ngân hàng
+- [x] `POST /api/users/me/bank-accounts` — thêm mới
+- [x] `PUT /api/users/me/bank-accounts/{id}` — cập nhật
+- [x] `DELETE /api/users/me/bank-accounts/{id}` — xóa (chỉ được xóa của mình)
+- [x] `PATCH /api/users/me/bank-accounts/{id}/default` — đặt làm mặc định (unset cái cũ)
 
 ---
 
@@ -346,8 +346,8 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 
 | Phase | Tasks | Status |
 |---|---|---|
-| 1 — Foundation | T01 | ⬜ |
-| 2 — Auth & User | T02, T03, T04, T05 | ⬜ |
+| 1 — Foundation | T01 | ✅ |
+| 2 — Auth & User | T02, T03, T04, T05 | ✅ T02 T04 T05 · ⬜ T03 |
 | 3 — Category & Tour | T06, T07, T08, T09 | ⬜ |
 | 4 — Booking & Payment | T10, T11 | ⬜ |
 | 5 — Social | T12, T13, T14, T15, T16 | ⬜ |
