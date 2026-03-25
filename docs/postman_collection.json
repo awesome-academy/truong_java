@@ -69,7 +69,7 @@
           "name": "Admin Login",
           "request": {
             "method": "POST",
-            "url": "{{baseUrl}}/api/auth/login",
+            "url": "{{baseUrl}}/api/auth/admin/login",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",

@@ -18,30 +18,30 @@ public class TourSpecification {
                 );
     }
 
-    // Nếu categoryId null → method trả null → Specification.where() bỏ qua
+    // Nếu param null → trả (root, query, cb) -> cb.conjunction() (no-op) — Specification.and() không chấp nhận null Java
     public static Specification<Tour> hasCategory(UUID categoryId) {
-        if (categoryId == null) return null;
+        if (categoryId == null) return (root, query, cb) -> cb.conjunction();
         return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
     }
 
     public static Specification<Tour> minPrice(BigDecimal min) {
-        if (min == null) return null;
+        if (min == null) return (root, query, cb) -> cb.conjunction();
         // greaterThanOrEqualTo = SQL: base_price >= min
         return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("basePrice"), min);
     }
 
     public static Specification<Tour> maxPrice(BigDecimal max) {
-        if (max == null) return null;
+        if (max == null) return (root, query, cb) -> cb.conjunction();
         return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("basePrice"), max);
     }
 
     public static Specification<Tour> hasDuration(Integer days) {
-        if (days == null) return null;
+        if (days == null) return (root, query, cb) -> cb.conjunction();
         return (root, query, cb) -> cb.equal(root.get("durationDays"), days);
     }
 
     public static Specification<Tour> hasDeparture(String location) {
-        if (location == null || location.isBlank()) return null;
+        if (location == null || location.isBlank()) return (root, query, cb) -> cb.conjunction();
         // like() = SQL: LOWER(departure_location) LIKE LOWER('%location%')
         return (root, query, cb) ->
                 cb.like(cb.lower(root.get("departureLocation")),

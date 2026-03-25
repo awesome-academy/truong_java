@@ -30,8 +30,13 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, null);
     }
 
-    // Lỗi
+    // Lỗi không có data
     public static <T> ApiResponse<T> error(String message) {
         return new ApiResponse<>(false, message, null);
+    }
+
+    // Lỗi có data (vd: validation errors theo field)
+    public static <T> ApiResponse<T> error(String message, T data) {
+        return new ApiResponse<>(false, message, data);
     }
 }

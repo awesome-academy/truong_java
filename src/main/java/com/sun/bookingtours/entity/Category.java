@@ -1,6 +1,7 @@
 package com.sun.bookingtours.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -8,6 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
+@BatchSize(size = 20)
 @Getter
 @Setter
 @NoArgsConstructor

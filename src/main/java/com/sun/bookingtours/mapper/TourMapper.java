@@ -20,6 +20,7 @@ public interface TourMapper {
     // MapStruct dùng method mapPlace/mapFood bên dưới để convert từng phần tử
     @Mapping(target = "places", source = "places")
     @Mapping(target = "foods",  source = "foods")
+    @Mapping(target = "schedules", ignore = true)
     TourResponse toResponse(Tour tour);
 
     TourImageResponse toImageResponse(TourImage image);

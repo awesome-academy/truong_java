@@ -150,21 +150,23 @@ De-dup tự động nhờ **1st-level cache (persistence context)** — Hibernat
 - Hibernate ném exception **trước khi chạy** để bảo vệ khỏi query tốn tài nguyên
 
 ```java
-// ❌ Ném MultipleBagFetchException (Hibernate 5)
+// ❌ Ném MultipleBagFetchException — mọi phiên bản Hibernate (kể cả 6.x, 7.x)
 SELECT t FROM Tour t
 LEFT JOIN FETCH t.images   -- List 1
 LEFT JOIN FETCH t.places   -- List 2
 LEFT JOIN FETCH t.foods    -- List 3
 ```
 
+> **Lưu ý:** `MultipleBagFetchException` **vẫn còn** trong Hibernate 6.x / 7.x (Spring Boot 3.x / 4.x). Hibernate chưa bao giờ tự xử lý trường hợp này — exception được ném ngay lúc build query để bảo vệ khỏi cartesian product.
+
 #### Các cách xử lý
 
 | Cách | Khi nào dùng | Đánh đổi |
 |---|---|---|
 | **Tách query riêng** | Collection lớn, cần kiểm soát chặt | Nhiều round-trip DB hơn |
-| **`Set` thay `List`** | Collection nhỏ, không cần thứ tự | Mất `sort_order`, cần `equals/hashCode` đúng |
+| **`Set` thay `List`** | Collection nhỏ, không cần thứ tự | Mất thứ tự chèn, cần `equals/hashCode` đúng |
+| **`@OrderColumn`** | Cần giữ `List` nhưng tránh bag | Thêm cột index trong DB |
 | **`@BatchSize`** | List nhiều records (giống `WHERE IN` của Laravel) | Cần config thêm |
-| **Hibernate 6+** | Spring Boot 3.x — tự xử lý, không ném exception | Hibernate tự quyết định strategy |
 
 **Rule of thumb:**
 ```
@@ -172,8 +174,51 @@ LEFT JOIN FETCH t.foods    -- List 3
 N records + collection     → tách query riêng hoặc @BatchSize
 ```
 
+**`@BatchSize` — cách hoạt động:**
+
+Thay vì lazy-load từng collection một, Hibernate gom tất cả ID chưa load trong session lại và fire 1 query `WHERE id = any (?)`:
+
+```
+-- Không có @BatchSize: N+1
+SELECT * FROM tour_places WHERE tour_id = 'aaa'   -- tour 1
+SELECT * FROM tour_places WHERE tour_id = 'bbb'   -- tour 2
+SELECT * FROM tour_places WHERE tour_id = 'ccc'   -- tour 3
+
+-- Có @BatchSize(size = 20): 1 batch query
+SELECT * FROM tour_places WHERE tour_id = any ('{aaa, bbb, ccc}')
+```
+
+Logic Hibernate:
+```
+mapper access tour1.getPlaces()
+  → Hibernate thấy tour2.places, tour3.places cũng chưa load
+  → gom tối đa size=20 ID → fire 1 query
+  → set kết quả cho cả 3 tour cùng lúc
+
+mapper access tour2.getPlaces() → đã có trong cache → không query thêm
+mapper access tour3.getPlaces() → đã có trong cache → không query thêm
+```
+
+**`size` nên đặt bao nhiêu:**
+- Nếu page size = 10 → `@BatchSize(size = 20)` đảm bảo luôn 1 query per collection
+- Nếu page có 100 tour và size=20 → `ceil(100/20) = 5` queries per collection (vẫn tốt hơn 100)
+- **Rule:** `size >= page size tối đa của app`
+
+**`@BatchSize` đặt ở đâu:**
+```java
+// Collection (OneToMany / ManyToMany) → đặt trên field
+@OneToMany(mappedBy = "tour")
+@BatchSize(size = 20)
+private List<TourImage> images;
+
+// ManyToOne lazy → đặt trên CLASS của entity target (không phải field)
+@Entity
+@BatchSize(size = 20)   // ← đặt ở Category, không phải ở Tour
+public class Category { ... }
+```
+
 **So sánh với Laravel Eloquent `with()`:**
-Laravel không dùng JOIN — chạy query riêng `WHERE IN` cho từng collection, không có cartesian product, không bao giờ gặp vấn đề này.
+Laravel không dùng JOIN — chạy query riêng `WHERE IN` cho từng collection, không có cartesian product, không bao giờ gặp vấn đề này. `@BatchSize` về bản chất giống cách Laravel xử lý.
 
 ---
 

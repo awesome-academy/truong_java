@@ -6,6 +6,7 @@ import com.sun.bookingtours.dto.response.TourScheduleResponse;
 import com.sun.bookingtours.entity.Tour;
 import com.sun.bookingtours.entity.TourSchedule;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
+import com.sun.bookingtours.mapper.TourScheduleMapper;
 import com.sun.bookingtours.repository.TourRepository;
 import com.sun.bookingtours.repository.TourScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class TourScheduleService {
 
     private final TourScheduleRepository scheduleRepository;
     private final TourRepository tourRepository;
+    private final TourScheduleMapper scheduleMapper;
 
     // readOnly = true — Hibernate bỏ dirty checking, tiết kiệm memory
     @Transactional(readOnly = true)
@@ -28,7 +30,7 @@ public class TourScheduleService {
         validateTourExists(tourId);
         return scheduleRepository.findByTourId(tourId)
                 .stream()
-                .map(this::toResponse)
+                .map(scheduleMapper::toResponse)
                 .toList();
     }
 
@@ -45,7 +47,7 @@ public class TourScheduleService {
                 .priceOverride(request.priceOverride())
                 .build();
 
-        return toResponse(scheduleRepository.save(schedule));
+        return scheduleMapper.toResponse(scheduleRepository.save(schedule));
     }
 
     @Transactional
@@ -58,14 +60,14 @@ public class TourScheduleService {
         schedule.setPriceOverride(request.priceOverride());
 
         // Không cần save() — dirty checking tự sinh UPDATE khi transaction commit
-        return toResponse(schedule);
+        return scheduleMapper.toResponse(schedule);
     }
 
     @Transactional
     public TourScheduleResponse updateStatus(UUID scheduleId, TourScheduleStatusRequest request) {
         TourSchedule schedule = findById(scheduleId);
         schedule.setStatus(request.status());
-        return toResponse(schedule);
+        return scheduleMapper.toResponse(schedule);
     }
 
     // ---- private helpers ----
@@ -81,14 +83,4 @@ public class TourScheduleService {
         }
     }
 
-    private TourScheduleResponse toResponse(TourSchedule s) {
-        return new TourScheduleResponse(
-                s.getId(),
-                s.getDepartureDate(),
-                s.getReturnDate(),
-                s.getTotalSlots(),
-                s.getPriceOverride(),
-                s.getStatus()
-        );
-    }
 }

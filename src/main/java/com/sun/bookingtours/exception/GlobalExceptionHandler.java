@@ -8,7 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -17,11 +18,14 @@ public class GlobalExceptionHandler {
     // Trả về list lỗi chi tiết theo từng field
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
-        List<String> errors = ex.getBindingResult().getFieldErrors()
+        Map<String, String> errors = ex.getBindingResult().getFieldErrors()
                 .stream()
-                .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                .toList();
-        return ResponseEntity.badRequest().body(ApiResponse.error("Validation failed: " + errors));
+                .collect(Collectors.toMap(
+                        e -> e.getField(),
+                        e -> e.getDefaultMessage(),
+                        (first, second) -> first
+                ));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Validation failed", errors));
     }
 
     // Bắt unique/fk/not-null constraint violation từ DB

@@ -19,13 +19,12 @@ public interface TourRepository extends JpaRepository<Tour, UUID>, JpaSpecificat
 
     boolean existsBySlug(String slug);
 
-    // Tìm tour theo slug, JOIN FETCH images + places + foods trong 1 query
-    // Tránh LazyInitializationException khi serialize response ngoài transaction
+    // Chỉ JOIN FETCH images (OneToMany) — tránh N+1 cho collection lớn nhất
+    // places và foods (ManyToMany List) được lazy-load trong transaction: không cần fetch ở đây
+    // vì JOIN FETCH đồng thời >= 2 bag (unordered List) gây MultipleBagFetchException
     @Query("""
         SELECT t FROM Tour t
         LEFT JOIN FETCH t.images
-        LEFT JOIN FETCH t.places
-        LEFT JOIN FETCH t.foods
         WHERE t.slug = :slug AND t.deletedAt IS NULL
     """)
     Optional<Tour> findBySlugWithDetails(@Param("slug") String slug);
@@ -34,8 +33,6 @@ public interface TourRepository extends JpaRepository<Tour, UUID>, JpaSpecificat
     @Query("""
         SELECT t FROM Tour t
         LEFT JOIN FETCH t.images
-        LEFT JOIN FETCH t.places
-        LEFT JOIN FETCH t.foods
         WHERE t.id = :id
     """)
     Optional<Tour> findByIdWithDetails(@Param("id") UUID id);

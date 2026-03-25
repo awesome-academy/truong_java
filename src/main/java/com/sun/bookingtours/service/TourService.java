@@ -14,6 +14,7 @@ import com.sun.bookingtours.entity.enums.TourStatus;
 import com.sun.bookingtours.exception.BusinessException;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
 import com.sun.bookingtours.mapper.TourMapper;
+import com.sun.bookingtours.mapper.TourScheduleMapper;
 import com.sun.bookingtours.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class TourService {
     private final FoodRepository foodRepository;
     private final TourScheduleRepository scheduleRepository;
     private final TourMapper tourMapper;
+    private final TourScheduleMapper scheduleMapper;
 
     @Transactional
     public TourResponse create(TourRequest request) {
@@ -109,9 +111,12 @@ public class TourService {
     public TourResponse addImages(UUID id, TourImageRequest request) {
         Tour tour = findById(id);
 
-        // sortOrder tính tiếp từ số ảnh hiện có
-        // VD: đã có 3 ảnh (0,1,2) → ảnh mới bắt đầu từ sortOrder=3
-        int nextOrder = tour.getImages().size();
+        // sortOrder tính từ max hiện có + 1, không dùng size()
+        // vì nếu đã xóa ảnh giữa chừng, size() < max(sortOrder) → trùng index
+        int nextOrder = tour.getImages().stream()
+                .mapToInt(TourImage::getSortOrder)
+                .max()
+                .orElse(-1) + 1;
 
         for (String url : request.getImageUrls()) {
             TourImage image = TourImage.builder()
@@ -142,14 +147,24 @@ public class TourService {
 
         // Thay toàn bộ danh sách places — không merge từng cái
         // Lý do: đơn giản hơn, UI gửi lên list đầy đủ sau khi chỉnh sửa
-        tour.setPlaces(placeRepository.findAllByIdIn(request.getIds()));
+        List<UUID> placeIds = request.getIds();
+        var places = placeRepository.findAllByIdIn(placeIds);
+        if (places.size() != placeIds.size()) {
+            throw new BusinessException("Một hoặc nhiều place ID không tồn tại");
+        }
+        tour.setPlaces(places);
         return tourMapper.toResponse(tour);
     }
 
     @Transactional
     public TourResponse updateFoods(UUID id, TourLinksRequest request) {
         Tour tour = findById(id);
-        tour.setFoods(foodRepository.findAllByIdIn(request.getIds()));
+        List<UUID> foodIds = request.getIds();
+        var foods = foodRepository.findAllByIdIn(foodIds);
+        if (foods.size() != foodIds.size()) {
+            throw new BusinessException("Một hoặc nhiều food ID không tồn tại");
+        }
+        tour.setFoods(foods);
         return tourMapper.toResponse(tour);
     }
 
@@ -178,13 +193,12 @@ public class TourService {
 
         TourResponse response = tourMapper.toResponse(tour);
 
-        // Load schedules riêng — không thể JOIN FETCH cùng lúc với images/places/foods
-        // vì Hibernate ném MultipleBagFetchException khi fetch >= 2 List collections
+        // Load schedules riêng — schedules không được JOIN FETCH trong query chính
+        // vì chỉ cần trả OPEN schedules, không phải tất cả
         List<TourScheduleResponse> schedules = scheduleRepository
                 .findByTourIdAndStatus(tour.getId(), ScheduleStatus.OPEN)
                 .stream()
-                .map(s -> new TourScheduleResponse(s.getId(), s.getDepartureDate(),
-                        s.getReturnDate(), s.getTotalSlots(), s.getPriceOverride(), s.getStatus()))
+                .map(scheduleMapper::toResponse)
                 .toList();
 
         response.setSchedules(schedules);
@@ -199,7 +213,7 @@ public class TourService {
     // ---- private helpers ----
 
     private Tour findById(UUID id) {
-        // Dùng findByIdWithDetails để load images/places/foods sẵn — tránh LazyInitializationException
+        // Dùng findByIdWithDetails để JOIN FETCH images sẵn — places/foods lazy-load trong transaction
         return tourRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour", id));
     }
