@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/error").permitAll()  // Spring Boot forward lỗi unhandled về /error — phải permit
                 .requestMatchers(HttpMethod.GET, "/api/tours/**", "/api/places/**",
                         "/api/foods/**", "/api/news/**", "/api/reviews/**",
                         "/api/categories/**").permitAll()

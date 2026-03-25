@@ -5,6 +5,7 @@ import com.sun.bookingtours.entity.enums.TourStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,7 +14,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface TourRepository extends JpaRepository<Tour, UUID> {
+// JpaSpecificationExecutor — cho phép dùng Specification để build dynamic query (filter tùy chọn)
+public interface TourRepository extends JpaRepository<Tour, UUID>, JpaSpecificationExecutor<Tour> {
 
     boolean existsBySlug(String slug);
 
@@ -40,4 +42,15 @@ public interface TourRepository extends JpaRepository<Tour, UUID> {
 
     // Public list: chỉ ACTIVE, chưa bị xóa, có pagination
     Page<Tour> findByStatusAndDeletedAtIsNull(TourStatus status, Pageable pageable);
+
+    // Search: ILIKE = case-insensitive LIKE của PostgreSQL
+    // Tìm trong title, description, departure_location
+    @Query("""
+        SELECT t FROM Tour t
+        WHERE t.status = 'ACTIVE' AND t.deletedAt IS NULL
+        AND (LOWER(t.title) LIKE LOWER(CONCAT('%', :q, '%'))
+          OR LOWER(t.description) LIKE LOWER(CONCAT('%', :q, '%'))
+          OR LOWER(t.departureLocation) LIKE LOWER(CONCAT('%', :q, '%')))
+    """)
+    Page<Tour> search(@Param("q") String q, Pageable pageable);
 }

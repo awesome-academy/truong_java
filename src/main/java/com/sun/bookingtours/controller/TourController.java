@@ -9,11 +9,15 @@ import com.sun.bookingtours.dto.response.TourResponse;
 import com.sun.bookingtours.service.TourService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -21,6 +25,36 @@ import java.util.UUID;
 public class TourController {
 
     private final TourService tourService;
+
+    // ---- Public (Guest + User) ----
+
+    // @RequestParam(required = false) — param tùy chọn, không gửi lên thì Spring inject null
+    // @PageableDefault — giá trị mặc định nếu client không truyền page/size/sort
+    @GetMapping("/api/tours")
+    public ResponseEntity<ApiResponse<Page<TourResponse>>> listPublic(
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Integer durationDays,
+            @RequestParam(required = false) String departureLocation,
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(
+                tourService.listPublic(categoryId, minPrice, maxPrice, durationDays, departureLocation, pageable)));
+    }
+
+    // /api/tours/search phải đặt TRƯỚC /api/tours/{slug}
+    // Nếu đặt sau, Spring sẽ match "search" như 1 slug → gọi nhầm getDetail("search")
+    @GetMapping("/api/tours/search")
+    public ResponseEntity<ApiResponse<Page<TourResponse>>> search(
+            @RequestParam String q,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(tourService.search(q, pageable)));
+    }
+
+    @GetMapping("/api/tours/{slug}")
+    public ResponseEntity<ApiResponse<TourResponse>> getDetail(@PathVariable String slug) {
+        return ResponseEntity.ok(ApiResponse.success(tourService.getPublicDetail(slug)));
+    }
 
     // ---- Admin ----
 

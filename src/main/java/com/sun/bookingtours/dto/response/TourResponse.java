@@ -33,6 +33,9 @@ public class TourResponse {
     private List<LinkSummary> places;
     private List<LinkSummary> foods;
 
+    // Chỉ populate ở detail endpoint — list endpoint để null (tránh query thừa)
+    private List<TourScheduleResponse> schedules;
+
     @Data
     public static class CategorySummary {
         private UUID id;

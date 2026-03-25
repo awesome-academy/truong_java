@@ -96,9 +96,153 @@ private UUID targetId;          // ID của target tương ứng
 | `boolean` | `BOOLEAN` | True/false |
 | `Map<String, Object>` | `JSONB` | Dữ liệu động, không cố định cấu trúc |
 
+### 1.7 N+1 Problem & MultipleBagFetchException
+
+#### N+1 Problem
+
+Khi query N entities rồi lazy load collection của từng cái trong vòng lặp → tổng 1 + N queries:
+
+```java
+List<Tour> tours = tourRepository.findAll();  // 1 query
+
+for (Tour t : tours) {
+    t.getImages();  // N queries — 1 query per tour
+}
+// 10 tours → 11 queries. 100 tours → 101 queries.
+```
+
+**Giải pháp: JOIN FETCH** — load collection ngay trong query chính, không lazy load:
+
+```java
+@Query("SELECT t FROM Tour t LEFT JOIN FETCH t.images WHERE t.slug = :slug")
+Optional<Tour> findBySlugWithImages(@Param("slug") String slug);
+// → 1 query duy nhất, images được load sẵn
+```
+
+Hibernate dịch JOIN FETCH thành SQL JOIN thông thường. DB trả về các rows đã gộp, Hibernate tự de-dup lại thành object đúng nhờ `@Id`.
+
+**Ví dụ — tour có 3 images, 4 places:**
+
+```
+-- DB trả về: 3 × 4 = 12 rows (cartesian product)
+row | image_url | place_name
+----|-----------|------------
+1   | anh1.jpg  | Hạ Long Bay
+2   | anh1.jpg  | Sapa         ← anh1.jpg lặp
+3   | anh1.jpg  | Hội An       ← anh1.jpg lặp
+4   | anh1.jpg  | Đà Nẵng      ← anh1.jpg lặp
+5   | anh2.jpg  | Hạ Long Bay  ← Hạ Long Bay lặp
+...
+12  | anh3.jpg  | Đà Nẵng
+
+-- Hibernate de-dup → Java object đúng:
+Tour { images: [anh1, anh2, anh3], places: [Hạ Long, Sapa, Hội An, Đà Nẵng] }
+```
+
+De-dup tự động nhờ **1st-level cache (persistence context)** — Hibernate track object theo `@Id`, thấy cùng ID thì dùng lại object cũ thay vì tạo mới.
+
+#### MultipleBagFetchException
+
+`Bag` = thuật ngữ Hibernate cho `java.util.List` không có order index — cho phép trùng lặp, không có thứ tự cố định.
+
+**Vấn đề:** JOIN FETCH 2 `List` (Bag) cùng lúc sinh cartesian product cực lớn:
+- 100 images × 50 places = **5,000 rows** chỉ để lấy 150 items thực sự
+- Hibernate ném exception **trước khi chạy** để bảo vệ khỏi query tốn tài nguyên
+
+```java
+// ❌ Ném MultipleBagFetchException (Hibernate 5)
+SELECT t FROM Tour t
+LEFT JOIN FETCH t.images   -- List 1
+LEFT JOIN FETCH t.places   -- List 2
+LEFT JOIN FETCH t.foods    -- List 3
+```
+
+#### Các cách xử lý
+
+| Cách | Khi nào dùng | Đánh đổi |
+|---|---|---|
+| **Tách query riêng** | Collection lớn, cần kiểm soát chặt | Nhiều round-trip DB hơn |
+| **`Set` thay `List`** | Collection nhỏ, không cần thứ tự | Mất `sort_order`, cần `equals/hashCode` đúng |
+| **`@BatchSize`** | List nhiều records (giống `WHERE IN` của Laravel) | Cần config thêm |
+| **Hibernate 6+** | Spring Boot 3.x — tự xử lý, không ném exception | Hibernate tự quyết định strategy |
+
+**Rule of thumb:**
+```
+1 record  + collection nhỏ → JOIN FETCH ổn
+N records + collection     → tách query riêng hoặc @BatchSize
+```
+
+**So sánh với Laravel Eloquent `with()`:**
+Laravel không dùng JOIN — chạy query riêng `WHERE IN` cho từng collection, không có cartesian product, không bao giờ gặp vấn đề này.
+
 ---
 
-## 2. Lombok
+## 2. Java `record` vs `class`
+
+`record` là tính năng từ Java 16, sinh ra để thay thế class chỉ dùng để chứa data.
+
+### 2.1 So sánh
+
+```java
+// Class thông thường — phải tự viết (hoặc dùng Lombok)
+public class TourScheduleRequest {
+    private LocalDate departureDate;
+    private int totalSlots;
+
+    public TourScheduleRequest(LocalDate departureDate, int totalSlots) { ... }
+    public LocalDate getDepartureDate() { ... }
+    public int getTotalSlots() { ... }
+    public boolean equals(Object o) { ... }
+    public int hashCode() { ... }
+}
+
+// Record — Java tự sinh tất cả ở trên
+public record TourScheduleRequest(LocalDate departureDate, int totalSlots) {}
+```
+
+### 2.2 Đặc điểm của `record`
+
+| Đặc điểm | Chi tiết |
+|---|---|
+| **Immutable** | Tất cả fields là `final` — không có setter, không thể thay đổi sau khi tạo |
+| **Getter khác tên** | `departureDate()` thay vì `getDepartureDate()` — không có prefix `get` |
+| **Không kế thừa được** | `record` không thể `extends` class khác (nhưng vẫn `implements` interface được) |
+| **Compact constructor** | Có thể validate trong constructor mà không cần khai báo lại params |
+
+### 2.3 Khi nào dùng gì?
+
+| | `record` | `class` |
+|---|---|---|
+| **DTO** (Request/Response) | ✅ Chuẩn — chỉ truyền data, không cần thay đổi | ✅ Dùng được nhưng thừa code |
+| **JPA Entity** | ❌ Không dùng — JPA cần no-arg constructor + setter để hydrate từ DB | ✅ Bắt buộc |
+| **Service, Repository** | ❌ | ✅ Bắt buộc |
+| **Value Object** (Money, Coordinate...) | ✅ Immutable là đúng bản chất | ✅ Dùng được |
+
+**Quy tắc nhớ nhanh:**
+```
+Chỉ chứa data, không có logic, không thay đổi sau khi tạo → dùng record
+Còn lại → dùng class
+```
+
+### 2.4 Compact constructor (validate đầu vào)
+
+```java
+public record TourScheduleRequest(LocalDate departureDate, LocalDate returnDate, int totalSlots) {
+    // Compact constructor — không cần khai báo lại params, tự nhận từ record header
+    public TourScheduleRequest {
+        if (returnDate.isBefore(departureDate)) {
+            throw new IllegalArgumentException("returnDate phải sau departureDate");
+        }
+        if (totalSlots <= 0) {
+            throw new IllegalArgumentException("totalSlots phải > 0");
+        }
+    }
+}
+```
+
+---
+
+## 3. Lombok
 
 | Annotation | Sinh ra |
 |---|---|

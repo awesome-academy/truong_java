@@ -5,20 +5,27 @@ import com.sun.bookingtours.dto.request.TourLinksRequest;
 import com.sun.bookingtours.dto.request.TourRequest;
 import com.sun.bookingtours.dto.request.TourStatusRequest;
 import com.sun.bookingtours.dto.response.TourResponse;
+import com.sun.bookingtours.dto.response.TourScheduleResponse;
 import com.sun.bookingtours.entity.Category;
 import com.sun.bookingtours.entity.Tour;
 import com.sun.bookingtours.entity.TourImage;
+import com.sun.bookingtours.entity.enums.ScheduleStatus;
 import com.sun.bookingtours.entity.enums.TourStatus;
 import com.sun.bookingtours.exception.BusinessException;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
 import com.sun.bookingtours.mapper.TourMapper;
 import com.sun.bookingtours.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -30,6 +37,7 @@ public class TourService {
     private final CategoryRepository categoryRepository;
     private final PlaceRepository placeRepository;
     private final FoodRepository foodRepository;
+    private final TourScheduleRepository scheduleRepository;
     private final TourMapper tourMapper;
 
     @Transactional
@@ -143,6 +151,49 @@ public class TourService {
         Tour tour = findById(id);
         tour.setFoods(foodRepository.findAllByIdIn(request.getIds()));
         return tourMapper.toResponse(tour);
+    }
+
+    // ---- Public API (Guest + User) ----
+
+    @Transactional(readOnly = true)
+    public Page<TourResponse> listPublic(UUID categoryId, BigDecimal minPrice, BigDecimal maxPrice,
+                                         Integer durationDays, String departureLocation, Pageable pageable) {
+        // Ghép các Specification lại — null spec tự động bị bỏ qua
+        Specification<Tour> spec = Specification
+                .where(TourSpecification.isPublic())
+                .and(TourSpecification.hasCategory(categoryId))
+                .and(TourSpecification.minPrice(minPrice))
+                .and(TourSpecification.maxPrice(maxPrice))
+                .and(TourSpecification.hasDuration(durationDays))
+                .and(TourSpecification.hasDeparture(departureLocation));
+
+        // Page<Tour> → Page<TourResponse>: map() giữ nguyên pagination metadata
+        return tourRepository.findAll(spec, pageable).map(tourMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public TourResponse getPublicDetail(String slug) {
+        Tour tour = tourRepository.findBySlugWithDetails(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tour", slug));
+
+        TourResponse response = tourMapper.toResponse(tour);
+
+        // Load schedules riêng — không thể JOIN FETCH cùng lúc với images/places/foods
+        // vì Hibernate ném MultipleBagFetchException khi fetch >= 2 List collections
+        List<TourScheduleResponse> schedules = scheduleRepository
+                .findByTourIdAndStatus(tour.getId(), ScheduleStatus.OPEN)
+                .stream()
+                .map(s -> new TourScheduleResponse(s.getId(), s.getDepartureDate(),
+                        s.getReturnDate(), s.getTotalSlots(), s.getPriceOverride(), s.getStatus()))
+                .toList();
+
+        response.setSchedules(schedules);
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TourResponse> search(String q, Pageable pageable) {
+        return tourRepository.search(q, pageable).map(tourMapper::toResponse);
     }
 
     // ---- private helpers ----
