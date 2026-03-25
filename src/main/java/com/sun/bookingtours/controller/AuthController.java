@@ -40,4 +40,11 @@ public class AuthController {
         authService.logout(request.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    // Endpoint riêng cho admin login — trả 401 nếu không phải ADMIN
+    // Tách riêng thay vì dùng chung /login để UI admin có thể gọi endpoint rõ ràng
+    @PostMapping("/admin/login")
+    public ResponseEntity<ApiResponse<AuthResponse>> adminLogin(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.loginAdmin(request)));
+    }
 }

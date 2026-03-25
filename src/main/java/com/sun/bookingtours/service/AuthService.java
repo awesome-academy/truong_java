@@ -5,8 +5,10 @@ import com.sun.bookingtours.dto.request.RegisterRequest;
 import com.sun.bookingtours.dto.response.AuthResponse;
 import com.sun.bookingtours.entity.RefreshToken;
 import com.sun.bookingtours.entity.User;
+import com.sun.bookingtours.entity.enums.Role;
 import com.sun.bookingtours.exception.BusinessException;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
+import com.sun.bookingtours.exception.UnauthorizedException;
 import com.sun.bookingtours.repository.RefreshTokenRepository;
 import com.sun.bookingtours.repository.UserRepository;
 import com.sun.bookingtours.security.JwtTokenProvider;
@@ -67,6 +69,24 @@ public class AuthService {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         User user = userRepository.findByEmail(userPrincipal.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", userPrincipal.getEmail()));
+
+        return generateTokens(user);
+    }
+
+    @Transactional
+    public AuthResponse loginAdmin(LoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        User user = userRepository.findByEmail(userPrincipal.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User", userPrincipal.getEmail()));
+
+        // Chặn ngay tại đây nếu không phải ADMIN — không cấp token
+        if (user.getRole() != Role.ADMIN) {
+            throw new UnauthorizedException("Tài khoản không có quyền admin");
+        }
 
         return generateTokens(user);
     }
