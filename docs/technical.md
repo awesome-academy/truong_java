@@ -602,3 +602,53 @@ Client                    JwtAuthenticationFilter       UserDetailsService      
 - `encode("rawPassword")` → hash khác nhau mỗi lần (do salt ngẫu nhiên)
 - `matches("rawPassword", hash)` → `true/false`
 - **Không bao giờ lưu plain-text password vào DB**
+
+---
+
+## 7. Transaction & Propagation
+
+### 7.1 `@Transactional` cơ bản
+
+| Attribute | Mặc định | Dùng khi |
+|---|---|---|
+| `propagation` | `REQUIRED` | — |
+| `readOnly` | `false` | Set `true` cho query-only → Hibernate bỏ dirty checking, tiết kiệm memory |
+
+### 7.2 Transaction Propagation
+
+Xác định **hành vi của transaction** khi một `@Transactional` method gọi một `@Transactional` method khác.
+
+| Giá trị | Hành vi |
+|---|---|
+| `REQUIRED` *(mặc định)* | Dùng chung transaction của caller nếu có, tự tạo nếu chưa có |
+| `REQUIRES_NEW` | Luôn tạo transaction mới, **tạm dừng** transaction của caller |
+
+### 7.3 Khi nào dùng `REQUIRES_NEW`?
+
+Khi muốn **tách biệt lifecycle** của 2 operation — cái này commit/rollback không ảnh hưởng cái kia.
+
+**Ví dụ: Activity log phải được lưu dù BookingService có rollback hay không:**
+
+```
+BookingService (@Transactional)
+│
+│  bookingRepository.save(booking)   ← transaction A
+│
+│  activityService.log(...)          ← REQUIRES_NEW → tạm dừng A, mở transaction B
+│  └─ activityRepository.save()      ← commit B ngay lập tức
+│
+│  [nếu BookingService rollback]     ← rollback A, nhưng B đã commit rồi → activity vẫn còn
+```
+
+```java
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void log(User user, Booking booking, ActivityType type) {
+    activityRepository.save(Activity.builder()
+            .user(user).booking(booking).type(type).build());
+}
+```
+
+**Ngược lại nếu dùng `REQUIRED` (mặc định):**
+```
+BookingService rollback → activity cũng bị rollback theo → mất log
+```
