@@ -40,6 +40,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()  // Spring Boot forward lỗi unhandled về /error — phải permit
+                // /api/reviews/me phải đứng trước rule permitAll bên dưới
+                // vì Spring Security match rule đầu tiên thắng — nếu để sau thì bị override bởi GET /api/reviews/**
+                .requestMatchers(HttpMethod.GET, "/api/reviews/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/tours/**", "/api/places/**",
                         "/api/foods/**", "/api/news/**", "/api/reviews/**",
                         "/api/categories/**").permitAll()
