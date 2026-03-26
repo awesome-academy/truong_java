@@ -4,11 +4,29 @@ import com.sun.bookingtours.dto.response.ApiResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // Bắt lỗi @Valid — @NotNull, @Positive, @Size... fail
+    // Trả về list lỗi chi tiết theo từng field
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<?>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        e -> e.getField(),
+                        e -> e.getDefaultMessage(),
+                        (first, second) -> first
+                ));
+        return ResponseEntity.badRequest().body(ApiResponse.error("Validation failed", errors));
+    }
 
     // Bắt unique/fk/not-null constraint violation từ DB
     @ExceptionHandler(DataIntegrityViolationException.class)

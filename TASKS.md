@@ -76,36 +76,36 @@
 ## PHASE 3 — Category & Tour
 
 ### T06 — Category (Admin)
-- [ ] Entity `Category` với self-reference `parent_id`
-- [ ] `GET /api/categories` — list dạng tree (Guest + User)
-- [ ] `POST /api/admin/categories` — tạo category
-- [ ] `PUT /api/admin/categories/{id}` — cập nhật
-- [ ] `DELETE /api/admin/categories/{id}` — xóa / deactivate (`is_active=false`)
+- [x] Entity `Category` với self-reference `parent_id`
+- [x] `GET /api/categories` — list dạng tree (Guest + User)
+- [x] `POST /api/admin/categories` — tạo category
+- [x] `PUT /api/admin/categories/{id}` — cập nhật
+- [x] `DELETE /api/admin/categories/{id}` — xóa / deactivate (`is_active=false`)
 
 ### T07 — Tour CRUD (Admin)
-- [ ] Entity `Tour`, `TourImage`, `TourPlace`, `TourFood`
-- [ ] `POST /api/admin/tours` — tạo tour (status mặc định `DRAFT`)
-- [ ] `PUT /api/admin/tours/{id}` — cập nhật thông tin tour
-- [ ] `DELETE /api/admin/tours/{id}` — soft delete (`deleted_at = NOW()`)
-- [ ] `PATCH /api/admin/tours/{id}/status` — chuyển status (`DRAFT`→`ACTIVE`→`INACTIVE`)
-- [ ] `POST /api/admin/tours/{id}/images` — upload/thêm ảnh
-- [ ] `DELETE /api/admin/tours/{id}/images/{imageId}` — xóa ảnh
-- [ ] `PUT /api/admin/tours/{id}/places` — set danh sách places liên kết
-- [ ] `PUT /api/admin/tours/{id}/foods` — set danh sách foods liên kết
+- [x] Entity `Tour`, `TourImage`, `TourPlace`, `TourFood`
+- [x] `POST /api/admin/tours` — tạo tour (status mặc định `DRAFT`)
+- [x] `PUT /api/admin/tours/{id}` — cập nhật thông tin tour
+- [x] `DELETE /api/admin/tours/{id}` — soft delete (`deleted_at = NOW()`)
+- [x] `PATCH /api/admin/tours/{id}/status` — chuyển status (`DRAFT`→`ACTIVE`→`INACTIVE`)
+- [x] `POST /api/admin/tours/{id}/images` — upload/thêm ảnh
+- [x] `DELETE /api/admin/tours/{id}/images/{imageId}` — xóa ảnh
+- [x] `PUT /api/admin/tours/{id}/places` — set danh sách places liên kết
+- [x] `PUT /api/admin/tours/{id}/foods` — set danh sách foods liên kết
 
 ### T08 — Tour Schedule (Admin)
-- [ ] Entity `TourSchedule`
-- [ ] `GET /api/admin/tours/{id}/schedules` — list schedules của tour
-- [ ] `POST /api/admin/tours/{id}/schedules` — tạo lịch khởi hành
-- [ ] `PUT /api/admin/schedules/{id}` — cập nhật lịch
-- [ ] `PATCH /api/admin/schedules/{id}/status` — đổi status (`OPEN`/`FULL`/`CANCELLED`)
+- [x] Entity `TourSchedule`
+- [x] `GET /api/admin/tours/{id}/schedules` — list schedules của tour
+- [x] `POST /api/admin/tours/{id}/schedules` — tạo lịch khởi hành
+- [x] `PUT /api/admin/schedules/{id}` — cập nhật lịch
+- [x] `PATCH /api/admin/schedules/{id}/status` — đổi status (`OPEN`/`FULL`/`CANCELLED`)
 
 ### T09 — Tour Public API (Guest + User)
-- [ ] `GET /api/tours` — list tours (chỉ `status=ACTIVE`, `deleted_at IS NULL`)
+- [x] `GET /api/tours` — list tours (chỉ `status=ACTIVE`, `deleted_at IS NULL`)
   - Filter: `categoryId`, `minPrice`, `maxPrice`, `durationDays`, `departureLocation`
   - Pagination: `page`, `size`, `sort`
-- [ ] `GET /api/tours/{slug}` — chi tiết tour (kèm images, schedules còn OPEN, places, foods)
-- [ ] `GET /api/tours/search?q=` — tìm kiếm theo title, description, departure_location (LIKE hoặc full-text)
+- [x] `GET /api/tours/{slug}` — chi tiết tour (kèm images, schedules còn OPEN, places, foods)
+- [x] `GET /api/tours/search?q=` — tìm kiếm theo title, description, departure_location (LIKE hoặc full-text)
 
 ---
 
@@ -348,7 +348,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 |---|---|---|
 | 1 — Foundation | T01 | ✅ |
 | 2 — Auth & User | T02, T03, T04, T05 | ✅ T02 T04 T05 · ⬜ T03 |
-| 3 — Category & Tour | T06, T07, T08, T09 | ⬜ |
+| 3 — Category & Tour | T06, T07, T08, T09 | ✅ T06 T07 T08 T09 |
 | 4 — Booking & Payment | T10, T11 | ⬜ |
 | 5 — Social | T12, T13, T14, T15, T16 | ⬜ |
 | 6 — Content | T17, T18 | ⬜ |

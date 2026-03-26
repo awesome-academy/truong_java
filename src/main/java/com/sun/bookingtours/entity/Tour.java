@@ -2,6 +2,7 @@ package com.sun.bookingtours.entity;
 
 import com.sun.bookingtours.entity.enums.TourStatus;
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -62,9 +63,11 @@ public class Tour {
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)  // mappedBy: chỉ field "tour" bên TourImage là owner của relationship
     @Builder.Default                                                                  // cascade=ALL: save/delete Tour thì tự save/delete luôn TourImage
-    private List<TourImage> images = new ArrayList<>();                               // orphanRemoval=true: xóa TourImage khỏi list thì tự DELETE khỏi DB
+    @BatchSize(size = 20)                                                             // orphanRemoval=true: xóa TourImage khỏi list thì tự DELETE khỏi DB
+    private List<TourImage> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<TourSchedule> schedules = new ArrayList<>();
 
@@ -74,6 +77,7 @@ public class Tour {
         joinColumns = @JoinColumn(name = "tour_id"),                    // FK trỏ về bảng hiện tại (tours)
         inverseJoinColumns = @JoinColumn(name = "place_id")             // FK trỏ về bảng kia (places)
     )
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Place> places = new ArrayList<>();
 
@@ -83,6 +87,7 @@ public class Tour {
         joinColumns = @JoinColumn(name = "tour_id"),
         inverseJoinColumns = @JoinColumn(name = "food_id")
     )
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Food> foods = new ArrayList<>();
 

@@ -4,18 +4,14 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080"
-    },
-    {
-      "key": "accessToken",
-      "value": ""
-    },
-    {
-      "key": "refreshToken",
-      "value": ""
-    }
+    { "key": "baseUrl", "value": "http://localhost:8090" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "categoryId", "value": "" },
+    { "key": "tourId", "value": "" },
+    { "key": "tourSlug", "value": "" },
+    { "key": "imageId", "value": "" },
+    { "key": "scheduleId", "value": "" }
   ],
   "item": [
     {
@@ -32,20 +28,18 @@
               "raw": "{\n  \"fullName\": \"Test User\",\n  \"email\": \"test@gmail.com\",\n  \"password\": \"123456\"\n}"
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const res = pm.response.json();",
-                  "if (res.data) {",
-                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
-                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
-                  "}"
-                ]
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                "}"
+              ]
             }
-          ]
+          }]
         },
         {
           "name": "Login",
@@ -58,20 +52,42 @@
               "raw": "{\n  \"email\": \"test@gmail.com\",\n  \"password\": \"123456\"\n}"
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const res = pm.response.json();",
-                  "if (res.data) {",
-                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
-                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
-                  "}"
-                ]
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                "}"
+              ]
             }
-          ]
+          }]
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/admin/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@sun.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                "}"
+              ]
+            }
+          }]
         },
         {
           "name": "Refresh Token",
@@ -84,20 +100,18 @@
               "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
             }
           },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const res = pm.response.json();",
-                  "if (res.data) {",
-                  "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
-                  "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
-                  "}"
-                ]
-              }
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                "  pm.collectionVariables.set('refreshToken', res.data.refreshToken);",
+                "}"
+              ]
             }
-          ]
+          }]
         },
         {
           "name": "Logout",
@@ -211,6 +225,324 @@
             "method": "PATCH",
             "url": "{{baseUrl}}/api/users/me/bank-accounts/:id/default",
             "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get Category Tree (Public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/categories",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Du lịch biển\",\n  \"description\": \"Các tour du lịch biển đảo\",\n  \"parentId\": null\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) { pm.collectionVariables.set('categoryId', res.data.id); }"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Create Child Category (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/categories",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Phú Quốc\",\n  \"description\": \"Tour Phú Quốc\",\n  \"parentId\": \"{{categoryId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/categories/{{categoryId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Du lịch biển đảo\",\n  \"description\": \"Cập nhật mô tả\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/categories/{{categoryId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tours (Admin)",
+      "item": [
+        {
+          "name": "Create Tour",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/tours",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tour Hạ Long 3 ngày 2 đêm\",\n  \"description\": \"Khám phá vịnh Hạ Long kỳ vĩ\",\n  \"thumbnailUrl\": \"https://example.com/halong.jpg\",\n  \"basePrice\": 3500000,\n  \"durationDays\": 3,\n  \"maxParticipants\": 30,\n  \"departureLocation\": \"Hà Nội\",\n  \"categoryId\": \"{{categoryId}}\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('tourId', res.data.id);",
+                "  pm.collectionVariables.set('tourSlug', res.data.slug);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Update Tour",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Tour Hạ Long 3 ngày 2 đêm - Cao cấp\",\n  \"description\": \"Trải nghiệm du thuyền 5 sao\",\n  \"thumbnailUrl\": \"https://example.com/halong-luxury.jpg\",\n  \"basePrice\": 5000000,\n  \"durationDays\": 3,\n  \"maxParticipants\": 20,\n  \"departureLocation\": \"Hà Nội\",\n  \"categoryId\": \"{{categoryId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Tour Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/status",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Add Images",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/images",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrls\": [\n    \"https://example.com/halong-1.jpg\",\n    \"https://example.com/halong-2.jpg\"\n  ]\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data && res.data.images && res.data.images.length > 0) {",
+                "  pm.collectionVariables.set('imageId', res.data.images[0].id);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Delete Image",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/images/{{imageId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Update Places",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/places",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }
+          }
+        },
+        {
+          "name": "Update Foods",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/foods",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }
+          }
+        },
+        {
+          "name": "Delete Tour",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tour Schedules (Admin)",
+      "item": [
+        {
+          "name": "List Schedules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/schedules",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Create Schedule",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/tours/{{tourId}}/schedules",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departureDate\": \"2025-06-01\",\n  \"returnDate\": \"2025-06-03\",\n  \"totalSlots\": 30,\n  \"priceOverride\": null\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) { pm.collectionVariables.set('scheduleId', res.data.id); }"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Update Schedule",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/schedules/{{scheduleId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departureDate\": \"2025-06-05\",\n  \"returnDate\": \"2025-06-07\",\n  \"totalSlots\": 25,\n  \"priceOverride\": 4000000\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Schedule Status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/schedules/{{scheduleId}}/status",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tours (Public)",
+      "item": [
+        {
+          "name": "List Tours",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/tours?page=0&size=10&sort=createdAt,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tours"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "createdAt,desc" },
+                { "key": "categoryId", "value": "", "disabled": true },
+                { "key": "minPrice", "value": "", "disabled": true },
+                { "key": "maxPrice", "value": "", "disabled": true },
+                { "key": "durationDays", "value": "", "disabled": true },
+                { "key": "departureLocation", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Tours",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/tours/search?q=Hạ Long&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tours", "search"],
+              "query": [
+                { "key": "q", "value": "Hạ Long" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tour Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tours/{{tourSlug}}"
           }
         }
       ]
