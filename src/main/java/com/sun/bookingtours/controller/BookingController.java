@@ -58,7 +58,7 @@ public class BookingController {
                 bookingService.getMyBookingById(principal, id)));
     }
 
-    @PostMapping("/{id}/cancel")
+    @PatchMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<BookingResponse>> cancel(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id,

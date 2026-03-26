@@ -554,7 +554,7 @@
         {
           "name": "Cancel Booking",
           "request": {
-            "method": "POST",
+            "method": "PATCH",
             "url": "{{baseUrl}}/api/bookings/{{bookingId}}/cancel",
             "header": [
               { "key": "Authorization", "value": "Bearer {{accessToken}}" },

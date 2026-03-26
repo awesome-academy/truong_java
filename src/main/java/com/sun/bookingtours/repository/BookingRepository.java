@@ -4,7 +4,9 @@ import com.sun.bookingtours.entity.Booking;
 import com.sun.bookingtours.entity.enums.BookingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,7 +24,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             WHERE b.schedule.id = :scheduleId
               AND b.status IN :statuses
             """)
-    int sumParticipantsByScheduleAndStatus(
+    long sumParticipantsByScheduleAndStatus(
             @Param("scheduleId") UUID scheduleId,
             @Param("statuses") List<BookingStatus> statuses
     );
@@ -41,4 +43,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     // Tìm booking theo id + userId → đảm bảo user chỉ xem booking của chính mình
     Optional<Booking> findByIdAndUserId(UUID id, UUID userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Booking b WHERE b.id = :id AND b.user.id = :userId")
+    Optional<Booking> findByIdAndUserIdForUpdate(@Param("id") UUID id, @Param("userId") UUID userId);
 }

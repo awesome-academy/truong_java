@@ -37,7 +37,7 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponse createPayment(UserPrincipal principal, CreatePaymentRequest request) {
-        Booking booking = bookingRepository.findByIdAndUserId(request.bookingId(), principal.getId())
+        Booking booking = bookingRepository.findByIdAndUserIdForUpdate(request.bookingId(), principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", request.bookingId()));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
@@ -85,6 +85,6 @@ public class PaymentService {
 
         return paymentRepository.findByBookingId(bookingId)
                 .map(paymentMapper::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment", bookingId));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment for bookingId", bookingId));
     }
 }

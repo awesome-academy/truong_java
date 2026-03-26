@@ -56,12 +56,12 @@ public class BookingService {
 
         // List.of() → immutable list, truyền vào IN clause của JPQL
         // COALESCE trong query đảm bảo trả 0 thay vì null khi chưa có booking
-        int usedSlots = bookingRepository.sumParticipantsByScheduleAndStatus(
+        long usedSlots = bookingRepository.sumParticipantsByScheduleAndStatus(
                 schedule.getId(),
                 List.of(BookingStatus.PENDING, BookingStatus.CONFIRMED)
         );
 
-        int availableSlots = schedule.getTotalSlots() - usedSlots;
+        long availableSlots = schedule.getTotalSlots() - usedSlots;
         if (availableSlots < request.numParticipants()) {
             throw new BusinessException("Không đủ chỗ. Còn lại: " + availableSlots + " chỗ");
         }
@@ -106,7 +106,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse cancelBooking(UserPrincipal principal, UUID bookingId, CancelBookingRequest request) {
-        Booking booking = bookingRepository.findByIdAndUserId(bookingId, principal.getId())
+        Booking booking = bookingRepository.findByIdAndUserIdForUpdate(bookingId, principal.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.CONFIRMED) {
