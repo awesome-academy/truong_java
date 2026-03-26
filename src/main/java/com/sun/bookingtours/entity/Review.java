@@ -46,6 +46,9 @@ public class Review {
     @Builder.Default
     private boolean isApproved = false;
 
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

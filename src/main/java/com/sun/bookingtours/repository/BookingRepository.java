@@ -1,5 +1,6 @@
 package com.sun.bookingtours.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,4 +65,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID>, JpaSpec
     Optional<Booking> findFirstByUserIdAndScheduleTourIdAndStatus(UUID userId, UUID tourId, BookingStatus status);
 
     List<Booking> findTop5ByUserIdOrderByBookedAtDesc(UUID userId);
+
+    // Spring Data derived query → tự sinh: WHERE status = ? AND bookedAt >= ? AND bookedAt <= ?
+    long countByStatusAndBookedAtBetween(BookingStatus status, LocalDateTime from, LocalDateTime to);
 }
