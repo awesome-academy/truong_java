@@ -602,3 +602,64 @@ Client                    JwtAuthenticationFilter       UserDetailsService      
 - `encode("rawPassword")` → hash khác nhau mỗi lần (do salt ngẫu nhiên)
 - `matches("rawPassword", hash)` → `true/false`
 - **Không bao giờ lưu plain-text password vào DB**
+
+---
+
+## 7. Transaction & Propagation
+
+### 7.1 `@Transactional` cơ bản
+
+| Attribute | Mặc định | Dùng khi |
+|---|---|---|
+| `propagation` | `REQUIRED` | — |
+| `readOnly` | `false` | Set `true` cho query-only → Hibernate bỏ dirty checking, tiết kiệm memory |
+
+### 7.2 Transaction Propagation
+
+Xác định **hành vi của transaction** khi một `@Transactional` method gọi một `@Transactional` method khác.
+
+| Giá trị | Hành vi |
+|---|---|
+| `REQUIRED` *(mặc định)* | Dùng chung transaction của caller nếu có, tự tạo nếu chưa có |
+| `REQUIRES_NEW` | Luôn tạo transaction mới, **tạm dừng** transaction của caller |
+
+### 7.3 Khi nào dùng `REQUIRES_NEW`?
+
+Khi muốn **tách biệt lifecycle** của 2 operation — cái này commit/rollback không ảnh hưởng cái kia.
+
+### 7.4 Activity log — `@TransactionalEventListener` + `REQUIRES_NEW`
+
+Activity log dùng **event-driven** thay vì gọi trực tiếp, kết hợp 2 annotation:
+
+```
+BookingService (@Transactional)
+│
+│  bookingRepository.save(booking)       ← transaction A
+│
+│  eventPublisher.publishEvent(...)      ← chỉ publish event, chưa chạy gì
+│
+│  [transaction A COMMIT thành công]
+│       │
+│       └─► ActivityService.log()        ← AFTER_COMMIT → chỉ chạy khi A commit xong
+│               └─ REQUIRES_NEW          → mở transaction B mới, độc lập
+│               └─ activityRepository.save()
+│
+│  [nếu BookingService rollback]         ← event không bắn → activity KHÔNG được lưu
+```
+
+```java
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void log(ActivityLogEvent event) {
+    activityRepository.save(Activity.builder()
+            .user(event.user()).booking(event.booking()).type(event.type()).build());
+}
+```
+
+**Tại sao dùng `AFTER_COMMIT` thay vì gọi trực tiếp với `REQUIRES_NEW`?**
+
+Nếu gọi trực tiếp với `REQUIRES_NEW`, activity được lưu **trước khi** transaction cha commit — lúc đó booking chưa tồn tại trên DB → vi phạm FK constraint.
+
+`AFTER_COMMIT` đảm bảo booking đã commit xong trước khi activity được ghi → FK luôn thoả.
+
+**Trade-off:** Nếu BookingService rollback, activity sẽ **không** được lưu (khác với `REQUIRES_NEW` gọi trực tiếp). Đây là hành vi mong muốn — không nên log activity cho một booking không tồn tại.

@@ -112,31 +112,31 @@
 ## PHASE 4 — Booking & Payment
 
 ### T10 — Booking (User)
-- [ ] Entity `Booking`
-- [ ] `POST /api/bookings` — tạo booking
-  - [ ] Validate schedule `status=OPEN`
-  - [ ] Validate còn đủ slot: `total_slots - SUM(num_participants của bookings CONFIRMED/PENDING) >= num_participants`
-  - [ ] Tính `total_amount = num_participants × (price_override ?? tour.base_price)`
-  - [ ] Sinh `booking_code` duy nhất (VD: `TOUR-YYYYMMDD-XXXXX`)
-  - [ ] Lưu booking `status=PENDING`
-  - [ ] Gọi `ActivityService.log(BOOKING_CREATED)`
-- [ ] `GET /api/bookings` — danh sách booking của user (filter `status`, pagination)
-- [ ] `GET /api/bookings/{id}` — chi tiết booking (chỉ của user đang đăng nhập)
-- [ ] `POST /api/bookings/{id}/cancel` — hủy booking
-  - [ ] Validate booking thuộc user, status phải là `PENDING` hoặc `CONFIRMED`
-  - [ ] Set `status=CANCELLED`, `cancelled_at`, `cancel_reason`
-  - [ ] Gọi `ActivityService.log(BOOKING_CANCELLED)`
+- [x] Entity `Booking`
+- [x] `POST /api/bookings` — tạo booking
+  - [x] Validate schedule `status=OPEN`
+  - [x] Validate còn đủ slot: `total_slots - SUM(num_participants của bookings CONFIRMED/PENDING) >= num_participants`
+  - [x] Tính `total_amount = num_participants × (price_override ?? tour.base_price)`
+  - [x] Sinh `booking_code` duy nhất (VD: `TOUR-YYYYMMDD-XXXXX`)
+  - [x] Lưu booking `status=PENDING`
+  - [x] Gọi `ActivityService.log(BOOKING_CREATED)`
+- [x] `GET /api/bookings` — danh sách booking của user (filter `status`, pagination)
+- [x] `GET /api/bookings/{id}` — chi tiết booking (chỉ của user đang đăng nhập)
+- [x] `PATCH /api/bookings/{id}/cancel` — hủy booking
+  - [x] Validate booking thuộc user, status phải là `PENDING` hoặc `CONFIRMED`
+  - [x] Set `status=CANCELLED`, `cancelled_at`, `cancel_reason`
+  - [x] Gọi `ActivityService.log(BOOKING_CANCELLED)`
 
 ### T11 — Payment (User)
-- [ ] Entity `Payment`
-- [ ] `POST /api/payments` — tạo payment
-  - [ ] Validate booking thuộc user, booking `status=PENDING`
-  - [ ] Validate `method=INTERNET_BANKING`
-  - [ ] Validate `bank_account_id` tồn tại và thuộc user (nếu truyền lên)
-  - [ ] Lưu payment `status=SUCCESS` (mock)
-  - [ ] Update booking `status=CONFIRMED`
-  - [ ] Gọi `ActivityService.log(PAYMENT_COMPLETED)`
-- [ ] `GET /api/payments/{bookingId}` — xem thông tin payment của booking
+- [x] Entity `Payment`
+- [x] `POST /api/payments` — tạo payment
+  - [x] Validate booking thuộc user, booking `status=PENDING`
+  - [x] Validate `method=INTERNET_BANKING`
+  - [x] Validate `bank_account_id` tồn tại và thuộc user (nếu truyền lên)
+  - [x] Lưu payment `status=SUCCESS` (mock)
+  - [x] Update booking `status=CONFIRMED`
+  - [x] Gọi `ActivityService.log(PAYMENT_COMPLETED)`
+- [x] `GET /api/payments/{bookingId}` — xem thông tin payment của booking
 
 ---
 
@@ -349,7 +349,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 1 — Foundation | T01 | ✅ |
 | 2 — Auth & User | T02, T03, T04, T05 | ✅ T02 T04 T05 · ⬜ T03 |
 | 3 — Category & Tour | T06, T07, T08, T09 | ✅ T06 T07 T08 T09 |
-| 4 — Booking & Payment | T10, T11 | ⬜ |
+| 4 — Booking & Payment | T10, T11 | ✅ |
 | 5 — Social | T12, T13, T14, T15, T16 | ⬜ |
 | 6 — Content | T17, T18 | ⬜ |
 | 7 — Admin API | T19, T20, T21, T22 | ⬜ |
