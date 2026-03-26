@@ -122,7 +122,7 @@
   - [x] Gọi `ActivityService.log(BOOKING_CREATED)`
 - [x] `GET /api/bookings` — danh sách booking của user (filter `status`, pagination)
 - [x] `GET /api/bookings/{id}` — chi tiết booking (chỉ của user đang đăng nhập)
-- [x] `POST /api/bookings/{id}/cancel` — hủy booking
+- [x] `PATCH /api/bookings/{id}/cancel` — hủy booking
   - [x] Validate booking thuộc user, status phải là `PENDING` hoặc `CONFIRMED`
   - [x] Set `status=CANCELLED`, `cancelled_at`, `cancel_reason`
   - [x] Gọi `ActivityService.log(BOOKING_CANCELLED)`
