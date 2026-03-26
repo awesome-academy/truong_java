@@ -3,6 +3,7 @@ package com.sun.bookingtours.entity;
 import com.sun.bookingtours.entity.enums.TourStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.SQLRestriction;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "tours")
+@SQLRestriction("deleted_at IS NULL")
 @Getter
 @Setter
 @NoArgsConstructor

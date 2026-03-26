@@ -55,10 +55,19 @@ public class ReviewService {
 
         Booking booking = null;
 
-        if (request.targetType() == TargetType.TOUR) {
-            booking = bookingRepository.findFirstByUserIdAndScheduleTourIdAndStatus(
-                            user.getId(), request.targetId(), BookingStatus.COMPLETED)
+        switch (request.targetType()) {
+            case TOUR -> booking = bookingRepository
+                    .findFirstByUserIdAndScheduleTourIdAndStatus(user.getId(), request.targetId(), BookingStatus.COMPLETED)
                     .orElseThrow(() -> new BusinessException("Bạn chưa có booking COMPLETED cho tour này"));
+            case PLACE -> {
+                if (!placeRepository.existsById(request.targetId()))
+                    throw new ResourceNotFoundException("Place", request.targetId());
+            }
+            case FOOD -> {
+                if (!foodRepository.existsById(request.targetId()))
+                    throw new ResourceNotFoundException("Food", request.targetId());
+            }
+            default -> throw new BusinessException("targetType phải là TOUR, PLACE hoặc FOOD");
         }
 
         Review review = Review.builder()

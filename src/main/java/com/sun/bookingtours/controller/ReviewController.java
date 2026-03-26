@@ -56,12 +56,12 @@ public class ReviewController {
     }
 
     @DeleteMapping("/api/reviews/{id}")
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<ApiResponse<?>> delete(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
 
         reviewService.deleteReview(principal, id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Review deleted"));
     }
 
     // @PageableDefault → mặc định page=0, size=10, sort theo createdAt mới nhất

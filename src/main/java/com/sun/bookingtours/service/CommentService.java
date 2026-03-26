@@ -5,6 +5,7 @@ import com.sun.bookingtours.dto.response.CommentResponse;
 import com.sun.bookingtours.entity.Comment;
 import com.sun.bookingtours.entity.enums.TargetType;
 import com.sun.bookingtours.exception.BusinessException;
+import com.sun.bookingtours.exception.ForbiddenException;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
 import com.sun.bookingtours.repository.CommentRepository;
 import com.sun.bookingtours.repository.NewsRepository;
@@ -77,8 +78,12 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(UserPrincipal principal, UUID commentId) {
-        Comment comment = commentRepository.findByIdAndUserId(commentId, principal.getId())
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", commentId));
+
+        if (!comment.getUser().getId().equals(principal.getId())) {
+            throw new ForbiddenException("Bạn không có quyền xóa comment này");
+        }
 
         // Replies tự bị xóa nhờ ON DELETE CASCADE trên parent_id trong DB
         commentRepository.delete(comment);
@@ -86,6 +91,10 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public List<CommentResponse> getComments(TargetType targetType, UUID targetId) {
+        if (targetType != TargetType.REVIEW && targetType != TargetType.NEWS) {
+            throw new BusinessException("targetType phải là REVIEW hoặc NEWS");
+        }
+
         List<Comment> all = commentRepository.findByTargetTypeAndTargetId(targetType, targetId);
 
         // Group replies theo parent_id — tất cả fetch trong 1 query, build tree trong Java

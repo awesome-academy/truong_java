@@ -28,17 +28,17 @@ public class CommentController {
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateCommentRequest request
     ) {
-        CommentResponse response = commentService.createComment(principal, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+        CommentResponse comment = commentService.createComment(principal, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(comment));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteComment(
+    public ResponseEntity<ApiResponse<?>> deleteComment(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id
     ) {
         commentService.deleteComment(principal, id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Comment deleted"));
     }
 
     @GetMapping

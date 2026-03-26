@@ -60,7 +60,7 @@ public class TourRatingService {
 
         TourRating rating = tourRatingRepository
                 .findByUserIdAndTourId(principal.getId(), tourId)
-                .orElseThrow(() -> new ResourceNotFoundException("TourRating", tourId));
+                .orElseThrow(() -> new BusinessException("Bạn chưa đánh giá tour này"));
 
         return tourRatingMapper.toResponse(rating);
     }

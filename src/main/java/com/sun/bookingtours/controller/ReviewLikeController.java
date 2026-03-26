@@ -1,5 +1,6 @@
 package com.sun.bookingtours.controller;
 
+import com.sun.bookingtours.dto.response.ApiResponse;
 import com.sun.bookingtours.security.UserPrincipal;
 import com.sun.bookingtours.service.ReviewLikeService;
 import lombok.RequiredArgsConstructor;
@@ -18,20 +19,20 @@ public class ReviewLikeController {
     private final ReviewLikeService reviewLikeService;
 
     @PostMapping
-    public ResponseEntity<Void> like(
+    public ResponseEntity<ApiResponse<?>> like(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID reviewId
     ) {
         reviewLikeService.like(principal, reviewId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Liked"));
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> unlike(
+    public ResponseEntity<ApiResponse<?>> unlike(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID reviewId
     ) {
         reviewLikeService.unlike(principal, reviewId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(ApiResponse.success("Unliked"));
     }
 }
