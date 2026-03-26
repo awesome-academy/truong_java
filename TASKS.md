@@ -206,10 +206,10 @@
 ## PHASE 7 — Admin Management API
 
 ### T19 — Admin: Manage Users
-- [ ] `GET /api/admin/users` — list users (filter: `role`, `isActive`, search `name/email`, pagination)
-- [ ] `GET /api/admin/users/{id}` — chi tiết user (kèm bookings gần đây)
-- [ ] `PATCH /api/admin/users/{id}/activate` — kích hoạt tài khoản (`is_active=true`)
-- [ ] `PATCH /api/admin/users/{id}/deactivate` — khóa tài khoản (`is_active=false`)
+- [x] `GET /api/admin/users` — list users (filter: `role`, `isActive`, search `name/email`, pagination)
+- [x] `GET /api/admin/users/{id}` — chi tiết user (kèm bookings gần đây)
+- [x] `PATCH /api/admin/users/{id}/activate` — kích hoạt tài khoản (`is_active=true`)
+- [x] `PATCH /api/admin/users/{id}/deactivate` — khóa tài khoản (`is_active=false`)
 
 ### T20 — Admin: Manage Bookings
 - [ ] `GET /api/admin/bookings` — list tất cả bookings (filter: `status`, `fromDate`, `toDate`, `userId`, pagination)
@@ -352,7 +352,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 4 — Booking & Payment | T10, T11 | ✅ |
 | 5 — Social | T12, T13, T14, T15, T16 | ✅ |
 | 6 — Content | T17, T18 | ✅ |
-| 7 — Admin API | T19, T20, T21, T22 | ⬜ |
+| 7 — Admin API | T19, T20, T21, T22 | 🔄 T19 ✅ · T20 T21 T22 ⬜ |
 | 8 — Admin UI | T23–T29 | ⬜ |
 | 9 — Cross-cutting | T30, T31, T32 | ⬜ |
 

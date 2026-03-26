@@ -51,4 +51,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     Optional<Booking> findByIdAndUserIdForUpdate(@Param("id") UUID id, @Param("userId") UUID userId);
 
     Optional<Booking> findFirstByUserIdAndScheduleTourIdAndStatus(UUID userId, UUID tourId, BookingStatus status);
+
+    List<Booking> findTop5ByUserIdOrderByBookedAtDesc(UUID userId);
 }
