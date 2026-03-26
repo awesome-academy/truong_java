@@ -220,6 +220,63 @@ public class Category { ... }
 **So sánh với Laravel Eloquent `with()`:**
 Laravel không dùng JOIN — chạy query riêng `WHERE IN` cho từng collection, không có cartesian product, không bao giờ gặp vấn đề này. `@BatchSize` về bản chất giống cách Laravel xử lý.
 
+### 1.5 `@EntityGraph` — JOIN FETCH cho ManyToOne
+
+`@EntityGraph` là annotation của Spring Data JPA, đặt trên method trong repository để chỉ định Hibernate JOIN FETCH các association cụ thể trong query đó. Khác với `@BatchSize` (đặt trên entity, ảnh hưởng toàn app), `@EntityGraph` chỉ ảnh hưởng đúng 1 query.
+
+**Cách hoạt động:**
+
+```
+-- Không có @EntityGraph: 3 queries cho mỗi booking (N+1)
+SELECT * FROM bookings WHERE ...            -- 1 query lấy 20 bookings
+SELECT * FROM users WHERE id = ?            -- 20 queries cho user
+SELECT * FROM tour_schedules WHERE id = ?   -- 20 queries cho schedule
+SELECT * FROM tours WHERE id = ?            -- 20 queries cho tour
+-- Tổng: 61 queries
+
+-- Có @EntityGraph: 1 query duy nhất
+SELECT b.*, u.*, s.*, t.*
+FROM bookings b
+JOIN users u ON u.id = b.user_id
+JOIN tour_schedules s ON s.id = b.schedule_id
+JOIN tours t ON t.id = s.tour_id
+WHERE ...
+-- Tổng: 1 query
+```
+
+**Cách dùng trong repository:**
+
+```java
+// Override method có sẵn của JpaSpecificationExecutor
+// Spring Data tự hiểu: khi gọi findAll(spec, pageable) sẽ dùng JOIN FETCH
+@EntityGraph(attributePaths = {"user", "schedule", "schedule.tour"})
+Page<Booking> findAll(Specification<Booking> spec, Pageable pageable);
+```
+
+`attributePaths` là danh sách các đường dẫn field cần JOIN FETCH. Dùng dấu `.` để đi sâu vào nested association (`schedule.tour` → JOIN từ schedule sang tour).
+
+**So sánh `@EntityGraph` vs `@BatchSize`:**
+
+| | `@EntityGraph` | `@BatchSize` |
+|---|---|---|
+| **Đặt ở đâu** | Method trong Repository | Field collection hoặc Entity class |
+| **Phù hợp cho** | `@ManyToOne` — query cụ thể cần kiểm soát | `@OneToMany` collection — load nhiều records |
+| **Số query** | 1 (JOIN FETCH) | Ceil(N / size) batch queries |
+| **Scope ảnh hưởng** | Chỉ 1 method trong repository | Toàn bộ app khi lazy-load entity đó |
+| **Pagination** | Cần dùng `@ManyToOne` để an toàn — nếu JOIN với collection sẽ bị count sai | Không ảnh hưởng pagination |
+| **Khi nào dùng** | Biết trước query nào cần fetch nhiều association | Không biết trước ai sẽ lazy-load collection |
+
+**Rule of thumb:**
+
+```
+@ManyToOne lazy + query cụ thể cần tối ưu  → @EntityGraph
+@OneToMany collection + load nhiều records  → @BatchSize
+```
+
+**Tại sao không dùng `@BatchSize` cho `@ManyToOne` trong case này:**
+
+`@BatchSize` đặt trên `@ManyToOne` phải đặt trên class `User` và `TourSchedule`, ảnh hưởng toàn bộ app. Trong khi chỉ có endpoint admin list bookings mới cần fetch cả 3 association cùng lúc. `@EntityGraph` cho phép kiểm soát chính xác hơn.
+
 ---
 
 ## 2. Java `record` vs `class`
