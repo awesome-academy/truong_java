@@ -212,22 +212,22 @@
 - [x] `PATCH /api/admin/users/{id}/deactivate` — khóa tài khoản (`is_active=false`)
 
 ### T20 — Admin: Manage Bookings
-- [ ] `GET /api/admin/bookings` — list tất cả bookings (filter: `status`, `fromDate`, `toDate`, `userId`, pagination)
-- [ ] `GET /api/admin/bookings/{id}` — chi tiết booking (kèm payment info)
-- [ ] `PATCH /api/admin/bookings/{id}/complete` — đánh dấu `COMPLETED`
-- [ ] `PATCH /api/admin/bookings/{id}/cancel` — hủy booking bởi admin
+- [x] `GET /api/admin/bookings` — list tất cả bookings (filter: `status`, `fromDate`, `toDate`, `userId`, pagination)
+- [x] `GET /api/admin/bookings/{id}` — chi tiết booking (kèm payment info)
+- [x] `PATCH /api/admin/bookings/{id}/complete` — đánh dấu `COMPLETED`
+- [x] `PATCH /api/admin/bookings/{id}/cancel` — hủy booking bởi admin
 
 ### T21 — Admin: Manage Reviews
-- [ ] `GET /api/admin/reviews` — list reviews (filter: `isApproved`, `targetType`, pagination)
-- [ ] `PATCH /api/admin/reviews/{id}/approve` — duyệt review (`is_approved=true`)
-- [ ] `PATCH /api/admin/reviews/{id}/reject` — từ chối / xóa review
-- [ ] `DELETE /api/admin/reviews/{id}` — xóa review
+- [x] `GET /api/admin/reviews` — list reviews (filter: `isApproved`, `targetType`, pagination)
+- [x] `PATCH /api/admin/reviews/{id}/approve` — duyệt review (`is_approved=true`)
+- [x] `PATCH /api/admin/reviews/{id}/reject` — từ chối / xóa review
+- [x] `DELETE /api/admin/reviews/{id}` — xóa review
 
 ### T22 — Admin: Revenue Report
-- [ ] `GET /api/admin/revenue` — tổng quan
+- [x] `GET /api/admin/revenue` — tổng quan
   - Params: `from`, `to` (date range)
   - Response: tổng doanh thu, số booking theo status, doanh thu theo tháng (group by)
-- [ ] `GET /api/admin/revenue/tours` — top tours theo doanh thu trong kỳ
+- [x] `GET /api/admin/revenue/tours` — top tours theo doanh thu trong kỳ
 
 ---
 
@@ -352,7 +352,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 4 — Booking & Payment | T10, T11 | ✅ |
 | 5 — Social | T12, T13, T14, T15, T16 | ✅ |
 | 6 — Content | T17, T18 | ✅ |
-| 7 — Admin API | T19, T20, T21, T22 | 🔄 T19 ✅ · T20 T21 T22 ⬜ |
+| 7 — Admin API | T19, T20, T21, T22 | ✅ |
 | 8 — Admin UI | T23–T29 | ⬜ |
 | 9 — Cross-cutting | T30, T31, T32 | ⬜ |
 

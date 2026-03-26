@@ -5,6 +5,7 @@ import com.sun.bookingtours.dto.response.AdminUserResponse;
 import com.sun.bookingtours.entity.User;
 import com.sun.bookingtours.entity.enums.Role;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
+import com.sun.bookingtours.mapper.AdminUserMapper;
 import com.sun.bookingtours.mapper.BookingMapper;
 import com.sun.bookingtours.repository.BookingRepository;
 import com.sun.bookingtours.repository.UserRepository;
@@ -25,6 +26,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+    private final AdminUserMapper adminUserMapper;
 
     @Transactional(readOnly = true)
     public Page<AdminUserResponse> listUsers(Role role, Boolean isActive, String search, Pageable pageable) {
@@ -33,7 +35,7 @@ public class AdminUserService {
                 .and(UserSpecification.isActive(isActive))
                 .and(UserSpecification.search(search));
 
-        return userRepository.findAll(spec, pageable).map(this::toAdminUserResponse);
+        return userRepository.findAll(spec, pageable).map(adminUserMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -57,30 +59,17 @@ public class AdminUserService {
 
     @Transactional
     public AdminUserResponse activate(UUID userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         user.setActive(true);
-        return toAdminUserResponse(userRepository.save(user));
+        return adminUserMapper.toResponse(userRepository.save(user));
     }
 
     @Transactional
     public AdminUserResponse deactivate(UUID userId) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
         user.setActive(false);
-        return toAdminUserResponse(userRepository.save(user));
-    }
-
-    private AdminUserResponse toAdminUserResponse(User user) {
-        return AdminUserResponse.builder()
-                .id(user.getId())
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
-                .role(user.getRole())
-                .isActive(user.isActive())
-                .createdAt(user.getCreatedAt())
-                .build();
+        return adminUserMapper.toResponse(userRepository.save(user));
     }
 }
