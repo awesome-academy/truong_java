@@ -10,6 +10,7 @@ Trước khi code, phải:
 3. **Chờ xác nhận** rồi mới làm từng bước một
 4. Những chỗ code tường minh rồi thì không cần comment. Chỉ comment với những chỗ logic phức tạp hoặc keyword mới
 5. Sau mỗi bước, hỏi user muốn tiếp tục không
+6. Cần đưa ra các solution như một dự án thực tế
 
 ---
 
