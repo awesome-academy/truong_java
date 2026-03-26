@@ -14,4 +14,8 @@ public interface PlaceRepository extends JpaRepository<Place, UUID> {
     List<Place> findAllByIdIn(List<UUID> ids);
 
     Optional<Place> findBySlug(String slug);
+
+    List<Place> findAllByIsActiveTrue();
+
+    boolean existsBySlug(String slug);
 }
