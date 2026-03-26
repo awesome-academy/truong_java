@@ -143,21 +143,21 @@
 ## PHASE 5 — Review, Rating & Social
 
 ### T12 — Review (User)
-- [ ] Entity `Review`
-- [ ] `POST /api/reviews` — tạo review
-  - [ ] Validate `target_type` ∈ {TOUR, PLACE, FOOD}
-  - [ ] Nếu `target_type=TOUR`: validate user có booking `status=COMPLETED` cho tour đó
-  - [ ] Mặc định `is_approved=false`
-  - [ ] Gọi `ActivityService.log(REVIEW_CREATED)`
-- [ ] `PUT /api/reviews/{id}` — cập nhật review (chỉ của mình, chưa được duyệt)
-- [ ] `DELETE /api/reviews/{id}` — xóa review của mình
-- [ ] `GET /api/reviews/me` — list review của user đang đăng nhập
+- [x] Entity `Review`
+- [x] `POST /api/reviews` — tạo review
+  - [x] Validate `target_type` ∈ {TOUR, PLACE, FOOD}
+  - [x] Nếu `target_type=TOUR`: validate user có booking `status=COMPLETED` cho tour đó
+  - [x] Mặc định `is_approved=false`
+  - [x] Gọi `ActivityService.log(REVIEW_CREATED)`
+- [x] `PUT /api/reviews/{id}` — cập nhật review (chỉ của mình, chưa được duyệt)
+- [x] `DELETE /api/reviews/{id}` — xóa review của mình
+- [x] `GET /api/reviews/me` — list review của user đang đăng nhập
 
 ### T13 — Review Public (Guest + User)
-- [ ] `GET /api/reviews?targetType=&targetId=` — list reviews `is_approved=true`, pagination
-- [ ] `GET /api/places/{slug}/reviews` — reviews của place cụ thể
-- [ ] `GET /api/foods/{slug}/reviews` — reviews của food cụ thể
-- [ ] `GET /api/tours/{slug}/reviews` — reviews của tour cụ thể
+- [x] `GET /api/reviews?targetType=&targetId=` — list reviews `is_approved=true`, pagination
+- [x] `GET /api/places/{slug}/reviews` — reviews của place cụ thể
+- [x] `GET /api/foods/{slug}/reviews` — reviews của food cụ thể
+- [x] `GET /api/tours/{slug}/reviews` — reviews của tour cụ thể
 
 ### T14 — Tour Rating (User)
 - [ ] Entity `TourRating`
@@ -350,7 +350,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 2 — Auth & User | T02, T03, T04, T05 | ✅ T02 T04 T05 · ⬜ T03 |
 | 3 — Category & Tour | T06, T07, T08, T09 | ✅ T06 T07 T08 T09 |
 | 4 — Booking & Payment | T10, T11 | ✅ |
-| 5 — Social | T12, T13, T14, T15, T16 | ⬜ |
+| 5 — Social | T12, T13, T14, T15, T16 | 🔄 T12 T13 ✅ · T14 T15 T16 ⬜ |
 | 6 — Content | T17, T18 | ⬜ |
 | 7 — Admin API | T19, T20, T21, T22 | ⬜ |
 | 8 — Admin UI | T23–T29 | ⬜ |

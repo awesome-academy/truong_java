@@ -15,27 +15,29 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sun.bookingtours.dto.request.CreateReviewRequest;
 import com.sun.bookingtours.dto.request.UpdateReviewRequest;
 import com.sun.bookingtours.dto.response.ApiResponse;
 import com.sun.bookingtours.dto.response.ReviewResponse;
+import com.sun.bookingtours.entity.enums.TargetType;
 import com.sun.bookingtours.security.UserPrincipal;
 import com.sun.bookingtours.service.ReviewService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+// Bỏ class-level @RequestMapping vì controller này phục vụ nhiều base path khác nhau:
+// /api/reviews, /api/tours/{slug}/reviews, /api/places/{slug}/reviews, /api/foods/{slug}/reviews
 @RestController
-@RequestMapping("/api/reviews")
 @RequiredArgsConstructor
 public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping
+    @PostMapping("/api/reviews")
     public ResponseEntity<ApiResponse<ReviewResponse>> create(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateReviewRequest request) {
@@ -44,7 +46,7 @@ public class ReviewController {
                 .body(ApiResponse.success(reviewService.createReview(principal, request)));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/api/reviews/{id}")
     public ResponseEntity<ApiResponse<ReviewResponse>> update(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id,
@@ -53,7 +55,7 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(reviewService.updateReview(principal, id, request)));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/api/reviews/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID id) {
@@ -62,11 +64,47 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success("Đã xóa review"));
     }
 
-    @GetMapping("/me")
+    // @PageableDefault → mặc định page=0, size=10, sort theo createdAt mới nhất
+    @GetMapping("/api/reviews/me")
     public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getMyReviews(
             @AuthenticationPrincipal UserPrincipal principal,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         return ResponseEntity.ok(ApiResponse.success(reviewService.getMyReviews(principal, pageable)));
+    }
+
+    // ---- Public endpoints (Guest + User) ----
+
+    @GetMapping("/api/reviews")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getReviews(
+            @RequestParam TargetType targetType,
+            @RequestParam UUID targetId,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getReviews(targetType, targetId, pageable)));
+    }
+
+    @GetMapping("/api/tours/{slug}/reviews")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getTourReviews(
+            @PathVariable String slug,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getReviewsByTourSlug(slug, pageable)));
+    }
+
+    @GetMapping("/api/places/{slug}/reviews")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getPlaceReviews(
+            @PathVariable String slug,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getReviewsByPlaceSlug(slug, pageable)));
+    }
+
+    @GetMapping("/api/foods/{slug}/reviews")
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getFoodReviews(
+            @PathVariable String slug,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ResponseEntity.ok(ApiResponse.success(reviewService.getReviewsByFoodSlug(slug, pageable)));
     }
 }

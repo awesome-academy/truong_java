@@ -22,7 +22,10 @@ import com.sun.bookingtours.exception.BusinessException;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
 import com.sun.bookingtours.mapper.ReviewMapper;
 import com.sun.bookingtours.repository.BookingRepository;
+import com.sun.bookingtours.repository.FoodRepository;
+import com.sun.bookingtours.repository.PlaceRepository;
 import com.sun.bookingtours.repository.ReviewRepository;
+import com.sun.bookingtours.repository.TourRepository;
 import com.sun.bookingtours.repository.UserRepository;
 import com.sun.bookingtours.security.UserPrincipal;
 
@@ -35,6 +38,9 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final TourRepository tourRepository;
+    private final PlaceRepository placeRepository;
+    private final FoodRepository foodRepository;
     private final ReviewMapper reviewMapper;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -103,6 +109,42 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getMyReviews(UserPrincipal principal, Pageable pageable) {
         return reviewRepository.findByUserId(principal.getId(), pageable)
+                .map(reviewMapper::toResponse);
+    }
+
+    // ---- Public endpoints (Guest + User) ----
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviews(TargetType targetType, UUID targetId, Pageable pageable) {
+        return reviewRepository.findByTargetTypeAndTargetIdAndIsApprovedTrue(targetType, targetId, pageable)
+                .map(reviewMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsByTourSlug(String slug, Pageable pageable) {
+        // findBySlugWithDetails → đã có sẵn, kèm điều kiện deletedAt IS NULL
+        UUID tourId = tourRepository.findBySlugWithDetails(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Tour", slug))
+                .getId();
+        return reviewRepository.findByTargetTypeAndTargetIdAndIsApprovedTrue(TargetType.TOUR, tourId, pageable)
+                .map(reviewMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsByPlaceSlug(String slug, Pageable pageable) {
+        UUID placeId = placeRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Place", slug))
+                .getId();
+        return reviewRepository.findByTargetTypeAndTargetIdAndIsApprovedTrue(TargetType.PLACE, placeId, pageable)
+                .map(reviewMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsByFoodSlug(String slug, Pageable pageable) {
+        UUID foodId = foodRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Food", slug))
+                .getId();
+        return reviewRepository.findByTargetTypeAndTargetIdAndIsApprovedTrue(TargetType.FOOD, foodId, pageable)
                 .map(reviewMapper::toResponse);
     }
 }

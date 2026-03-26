@@ -1,16 +1,17 @@
 package com.sun.bookingtours.repository;
 
-import com.sun.bookingtours.entity.Review;
-import com.sun.bookingtours.entity.enums.BookingStatus;
-import com.sun.bookingtours.entity.enums.TargetType;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.Optional;
-import java.util.UUID;
+import com.sun.bookingtours.entity.Review;
+import com.sun.bookingtours.entity.enums.BookingStatus;
+import com.sun.bookingtours.entity.enums.TargetType;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
@@ -36,4 +37,7 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     Optional<Review> findByIdAndUserId(UUID id, UUID userId);
 
     Page<Review> findByUserId(UUID userId, Pageable pageable);
+
+    // Dùng chung cho tất cả public endpoints: general query + tour/place/food slug-based
+    Page<Review> findByTargetTypeAndTargetIdAndIsApprovedTrue(TargetType targetType, UUID targetId, Pageable pageable);
 }
