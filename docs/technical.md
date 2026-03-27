@@ -220,6 +220,63 @@ public class Category { ... }
 **So sánh với Laravel Eloquent `with()`:**
 Laravel không dùng JOIN — chạy query riêng `WHERE IN` cho từng collection, không có cartesian product, không bao giờ gặp vấn đề này. `@BatchSize` về bản chất giống cách Laravel xử lý.
 
+### 1.5 `@EntityGraph` — JOIN FETCH cho ManyToOne
+
+`@EntityGraph` là annotation của Spring Data JPA, đặt trên method trong repository để chỉ định Hibernate JOIN FETCH các association cụ thể trong query đó. Khác với `@BatchSize` (đặt trên entity, ảnh hưởng toàn app), `@EntityGraph` chỉ ảnh hưởng đúng 1 query.
+
+**Cách hoạt động:**
+
+```
+-- Không có @EntityGraph: 3 queries cho mỗi booking (N+1)
+SELECT * FROM bookings WHERE ...            -- 1 query lấy 20 bookings
+SELECT * FROM users WHERE id = ?            -- 20 queries cho user
+SELECT * FROM tour_schedules WHERE id = ?   -- 20 queries cho schedule
+SELECT * FROM tours WHERE id = ?            -- 20 queries cho tour
+-- Tổng: 61 queries
+
+-- Có @EntityGraph: 1 query duy nhất
+SELECT b.*, u.*, s.*, t.*
+FROM bookings b
+JOIN users u ON u.id = b.user_id
+JOIN tour_schedules s ON s.id = b.schedule_id
+JOIN tours t ON t.id = s.tour_id
+WHERE ...
+-- Tổng: 1 query
+```
+
+**Cách dùng trong repository:**
+
+```java
+// Override method có sẵn của JpaSpecificationExecutor
+// Spring Data tự hiểu: khi gọi findAll(spec, pageable) sẽ dùng JOIN FETCH
+@EntityGraph(attributePaths = {"user", "schedule", "schedule.tour"})
+Page<Booking> findAll(Specification<Booking> spec, Pageable pageable);
+```
+
+`attributePaths` là danh sách các đường dẫn field cần JOIN FETCH. Dùng dấu `.` để đi sâu vào nested association (`schedule.tour` → JOIN từ schedule sang tour).
+
+**So sánh `@EntityGraph` vs `@BatchSize`:**
+
+| | `@EntityGraph` | `@BatchSize` |
+|---|---|---|
+| **Đặt ở đâu** | Method trong Repository | Field collection hoặc Entity class |
+| **Phù hợp cho** | `@ManyToOne` — query cụ thể cần kiểm soát | `@OneToMany` collection — load nhiều records |
+| **Số query** | 1 (JOIN FETCH) | Ceil(N / size) batch queries |
+| **Scope ảnh hưởng** | Chỉ 1 method trong repository | Toàn bộ app khi lazy-load entity đó |
+| **Pagination** | Cần dùng `@ManyToOne` để an toàn — nếu JOIN với collection sẽ bị count sai | Không ảnh hưởng pagination |
+| **Khi nào dùng** | Biết trước query nào cần fetch nhiều association | Không biết trước ai sẽ lazy-load collection |
+
+**Rule of thumb:**
+
+```
+@ManyToOne lazy + query cụ thể cần tối ưu  → @EntityGraph
+@OneToMany collection + load nhiều records  → @BatchSize
+```
+
+**Tại sao không dùng `@BatchSize` cho `@ManyToOne` trong case này:**
+
+`@BatchSize` đặt trên `@ManyToOne` phải đặt trên class `User` và `TourSchedule`, ảnh hưởng toàn bộ app. Trong khi chỉ có endpoint admin list bookings mới cần fetch cả 3 association cùng lúc. `@EntityGraph` cho phép kiểm soát chính xác hơn.
+
 ---
 
 ## 2. Java `record` vs `class`
@@ -663,3 +720,179 @@ Nếu gọi trực tiếp với `REQUIRES_NEW`, activity được lưu **trướ
 `AFTER_COMMIT` đảm bảo booking đã commit xong trước khi activity được ghi → FK luôn thoả.
 
 **Trade-off:** Nếu BookingService rollback, activity sẽ **không** được lưu (khác với `REQUIRES_NEW` gọi trực tiếp). Đây là hành vi mong muốn — không nên log activity cho một booking không tồn tại.
+
+---
+
+## 8. Specification — Dynamic Query
+
+### 8.1 Vấn đề Specification giải quyết
+
+Admin cần filter users theo nhiều tiêu chí tùy chọn: `role`, `isActive`, `search` (tên/email). Nếu không có Specification, phải viết method repository cho từng tổ hợp:
+
+```java
+// ❌ Không dùng Specification — phải viết 2^N method
+findByRole(role)
+findByIsActive(isActive)
+findByRoleAndIsActive(role, isActive)
+findByEmailContaining(search)
+findByRoleAndEmailContaining(role, search)
+findByIsActiveAndEmailContaining(isActive, search)
+findByRoleAndIsActiveAndEmailContaining(role, isActive, search)
+// 3 filter → 7 method. 5 filter → 31 method
+```
+
+Với Specification, chỉ cần 1 method `findAll(spec, pageable)`, filter được ghép động lúc runtime:
+
+```java
+// ✅ Dùng Specification — 1 method, ghép filter tùy ý
+Specification<User> spec = Specification
+    .where(UserSpecification.hasRole(role))
+    .and(UserSpecification.isActive(isActive))
+    .and(UserSpecification.search(keyword));
+
+userRepository.findAll(spec, pageable);
+```
+
+---
+
+### 8.2 Cách hoạt động
+
+Mỗi `Specification<T>` là một functional interface nhận vào 3 tham số và trả về 1 `Predicate` (điều kiện WHERE):
+
+```java
+@FunctionalInterface
+public interface Specification<T> {
+    Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb);
+}
+```
+
+| Tham số | Kiểu | Vai trò |
+|---|---|---|
+| `root` | `Root<T>` | Đại diện cho bảng chính — `root.get("fieldName")` = trỏ vào column |
+| `query` | `CriteriaQuery<?>` | Toàn bộ câu query — ít dùng trực tiếp |
+| `cb` | `CriteriaBuilder` | Factory tạo các điều kiện SQL (`equal`, `like`, `isNull`...) |
+
+Vì là functional interface, mỗi Specification viết dưới dạng **lambda**:
+
+```java
+// (root, query, cb) -> <Predicate>
+(root, query, cb) -> cb.equal(root.get("role"), Role.ADMIN)
+// SQL: WHERE role = 'ADMIN'
+```
+
+---
+
+### 8.3 Các điều kiện CriteriaBuilder hay dùng
+
+| Method | SQL tương đương | Ví dụ |
+|---|---|---|
+| `cb.equal(path, value)` | `col = ?` | `cb.equal(root.get("isActive"), true)` |
+| `cb.notEqual(path, value)` | `col != ?` | |
+| `cb.like(path, pattern)` | `col LIKE ?` | `cb.like(root.get("email"), "%@gmail%")` |
+| `cb.lower(path)` | `LOWER(col)` | Dùng kèm `like` để tìm case-insensitive |
+| `cb.isNull(path)` | `col IS NULL` | `cb.isNull(root.get("deletedAt"))` |
+| `cb.isNotNull(path)` | `col IS NOT NULL` | |
+| `cb.greaterThanOrEqualTo(path, val)` | `col >= ?` | Filter minPrice |
+| `cb.lessThanOrEqualTo(path, val)` | `col <= ?` | Filter maxPrice |
+| `cb.and(p1, p2, ...)` | `p1 AND p2` | Ghép nhiều điều kiện |
+| `cb.or(p1, p2, ...)` | `p1 OR p2` | Điều kiện hoặc |
+| `cb.conjunction()` | `1=1` (no-op) | Dùng khi param null — không thêm điều kiện gì |
+
+---
+
+### 8.4 Pattern viết Specification class
+
+```java
+public class UserSpecification {
+
+    // Filter theo role — nếu null thì không filter
+    public static Specification<User> hasRole(Role role) {
+        if (role == null) return (root, query, cb) -> cb.conjunction();
+        return (root, query, cb) -> cb.equal(root.get("role"), role);
+    }
+
+    // Filter theo isActive — nếu null thì không filter
+    public static Specification<User> isActive(Boolean active) {
+        if (active == null) return (root, query, cb) -> cb.conjunction();
+        return (root, query, cb) -> cb.equal(root.get("isActive"), active);
+    }
+
+    // Tìm kiếm trong fullName hoặc email — OR giữa 2 column
+    public static Specification<User> search(String keyword) {
+        if (keyword == null || keyword.isBlank()) return (root, query, cb) -> cb.conjunction();
+        String pattern = "%" + keyword.toLowerCase() + "%";
+        return (root, query, cb) -> cb.or(
+            cb.like(cb.lower(root.get("fullName")), pattern),
+            cb.like(cb.lower(root.get("email")), pattern)
+        );
+        // SQL: WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ?
+    }
+}
+```
+
+**Tại sao trả `cb.conjunction()` khi null?**
+
+`Specification.where(null)` sẽ throw NullPointerException. `cb.conjunction()` là `1=1` — luôn đúng, không lọc gì — nên `.and(cb.conjunction())` là no-op hoàn toàn an toàn.
+
+---
+
+### 8.5 Ghép Specification trong Service
+
+```java
+public Page<UserResponse> listUsers(Role role, Boolean isActive, String search, Pageable pageable) {
+    Specification<User> spec = Specification
+        .where(UserSpecification.hasRole(role))      // null → no-op
+        .and(UserSpecification.isActive(isActive))   // null → no-op
+        .and(UserSpecification.search(search));      // null/blank → no-op
+
+    return userRepository.findAll(spec, pageable).map(userMapper::toResponse);
+}
+```
+
+Ví dụ khi client gọi `GET /api/admin/users?role=ADMIN&isActive=true`:
+- `hasRole(ADMIN)` → `WHERE role = 'ADMIN'`
+- `isActive(true)` → `AND is_active = true`
+- `search(null)` → `AND 1=1` (bị loại bỏ)
+
+SQL cuối: `SELECT * FROM users WHERE role = 'ADMIN' AND is_active = true`
+
+---
+
+### 8.6 Repository phải extends `JpaSpecificationExecutor`
+
+```java
+// JpaRepository<Entity, ID>          — CRUD cơ bản
+// JpaSpecificationExecutor<Entity>   — thêm findAll(Specification, Pageable)
+public interface UserRepository
+        extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
+    // không cần viết gì thêm — findAll(spec, pageable) đã có sẵn
+}
+```
+
+`JpaSpecificationExecutor` expose thêm các method:
+
+| Method | Dùng khi |
+|---|---|
+| `findAll(spec, pageable)` | List với filter + pagination |
+| `findAll(spec)` | List tất cả, không pagination |
+| `findOne(spec)` | Lấy 1 record theo điều kiện động |
+| `count(spec)` | Đếm theo điều kiện động |
+| `exists(spec)` | Kiểm tra tồn tại |
+
+---
+
+### 8.7 Quan hệ nested — truy cập column qua JOIN
+
+Nếu cần filter qua quan hệ (VD: tìm tours theo `category.name`), `root.get()` chain được:
+
+```java
+// root.get("category") → JOIN vào bảng categories
+// root.get("category").get("id") → categories.id
+public static Specification<Tour> hasCategory(UUID categoryId) {
+    if (categoryId == null) return (root, query, cb) -> cb.conjunction();
+    return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
+    // SQL: WHERE category_id = ?  (Hibernate tự biết dùng FK, không cần explicit JOIN)
+}
+```
+
+Hibernate tự sinh `JOIN` hoặc dùng FK trực tiếp tùy cấu hình quan hệ — mày không cần viết JOIN thủ công.

@@ -12,7 +12,15 @@
     { "key": "tourSlug", "value": "" },
     { "key": "imageId", "value": "" },
     { "key": "scheduleId", "value": "" },
-    { "key": "bookingId", "value": "" }
+    { "key": "bookingId", "value": "" },
+    { "key": "reviewId", "value": "" },
+    { "key": "commentId", "value": "" },
+    { "key": "placeId", "value": "" },
+    { "key": "placeSlug", "value": "" },
+    { "key": "foodId", "value": "" },
+    { "key": "foodSlug", "value": "" },
+    { "key": "newsId", "value": "" },
+    { "key": "newsSlug", "value": "" }
   ],
   "item": [
     {
@@ -500,6 +508,70 @@
       ]
     },
     {
+      "name": "Tours (Public)",
+      "item": [
+        {
+          "name": "List Tours",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/tours?page=0&size=10&sort=createdAt,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tours"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "createdAt,desc" },
+                { "key": "categoryId", "value": "", "disabled": true },
+                { "key": "minPrice", "value": "", "disabled": true },
+                { "key": "maxPrice", "value": "", "disabled": true },
+                { "key": "durationDays", "value": "", "disabled": true },
+                { "key": "departureLocation", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Tours",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/tours/search?q=Hạ Long&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tours", "search"],
+              "query": [
+                { "key": "q", "value": "Hạ Long" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tour Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tours/{{tourSlug}}"
+          }
+        },
+        {
+          "name": "Get Tour Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/tours/{{tourSlug}}/reviews?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tours", "{{tourSlug}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Bookings",
       "item": [
         {
@@ -597,39 +669,82 @@
       ]
     },
     {
-      "name": "Tours (Public)",
+      "name": "Reviews",
       "item": [
         {
-          "name": "List Tours",
+          "name": "Create Review",
           "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/tours?page=0&size=10&sort=createdAt,desc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "tours"],
-              "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "10" },
-                { "key": "sort", "value": "createdAt,desc" },
-                { "key": "categoryId", "value": "", "disabled": true },
-                { "key": "minPrice", "value": "", "disabled": true },
-                { "key": "maxPrice", "value": "", "disabled": true },
-                { "key": "durationDays", "value": "", "disabled": true },
-                { "key": "departureLocation", "value": "", "disabled": true }
+            "method": "POST",
+            "url": "{{baseUrl}}/api/reviews",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetType\": \"TOUR\",\n  \"targetId\": \"{{tourId}}\",\n  \"title\": \"Tour rất tuyệt vời\",\n  \"content\": \"Hướng dẫn viên nhiệt tình, cảnh đẹp\",\n  \"rating\": 5\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) { pm.collectionVariables.set('reviewId', res.data.id); }"
               ]
+            }
+          }]
+        },
+        {
+          "name": "Update Review",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/reviews/{{reviewId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Cập nhật: Tour rất tuyệt vời\",\n  \"content\": \"Dịch vụ tốt, sẽ quay lại\",\n  \"rating\": 4\n}"
             }
           }
         },
         {
-          "name": "Search Tours",
+          "name": "Delete Review",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/reviews/{{reviewId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Get My Reviews",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/tours/search?q=Hạ Long&page=0&size=10",
+              "raw": "{{baseUrl}}/api/reviews/me?page=0&size=10",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "tours", "search"],
+              "path": ["api", "reviews", "me"],
               "query": [
-                { "key": "q", "value": "Hạ Long" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Get Reviews By Target (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews?targetType=TOUR&targetId={{tourId}}&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                { "key": "targetType", "value": "TOUR" },
+                { "key": "targetId", "value": "{{tourId}}" },
                 { "key": "page", "value": "0" },
                 { "key": "size", "value": "10" }
               ]
@@ -637,10 +752,382 @@
           }
         },
         {
-          "name": "Get Tour Detail",
+          "name": "Like Review",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/reviews/{{reviewId}}/like",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Unlike Review",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/reviews/{{reviewId}}/like",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tour Ratings",
+      "item": [
+        {
+          "name": "Rate Tour (Upsert)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tours/{{tourId}}/ratings",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5\n}"
+            }
+          }
+        },
+        {
+          "name": "Get My Rating For Tour",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/tours/{{tourSlug}}"
+            "url": "{{baseUrl}}/api/tours/{{tourId}}/ratings/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/comments",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetType\": \"REVIEW\",\n  \"targetId\": \"{{reviewId}}\",\n  \"parentId\": null,\n  \"content\": \"Tôi đồng ý với review này!\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) { pm.collectionVariables.set('commentId', res.data.id); }"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Reply to Comment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/comments",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetType\": \"REVIEW\",\n  \"targetId\": \"{{reviewId}}\",\n  \"parentId\": \"{{commentId}}\",\n  \"content\": \"Cảm ơn bạn đã chia sẻ!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/comments/{{commentId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Get Comments By Target (Public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/comments?targetType=REVIEW&targetId={{reviewId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments"],
+              "query": [
+                { "key": "targetType", "value": "REVIEW" },
+                { "key": "targetId", "value": "{{reviewId}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Places (Admin)",
+      "item": [
+        {
+          "name": "Create Place",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/places",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vịnh Hạ Long\",\n  \"slug\": \"vinh-ha-long\",\n  \"location\": \"Quảng Ninh\",\n  \"description\": \"Di sản thiên nhiên thế giới\",\n  \"thumbnailUrl\": \"https://example.com/halong.jpg\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('placeId', res.data.id);",
+                "  pm.collectionVariables.set('placeSlug', res.data.slug);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Update Place",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/places/{{placeId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vịnh Hạ Long\",\n  \"location\": \"Quảng Ninh\",\n  \"description\": \"Cập nhật mô tả\",\n  \"thumbnailUrl\": \"https://example.com/halong-v2.jpg\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Place",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/places/{{placeId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Places (Public)",
+      "item": [
+        {
+          "name": "List Places",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/places"
+          }
+        },
+        {
+          "name": "Get Place Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/places/{{placeSlug}}"
+          }
+        },
+        {
+          "name": "Get Place Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/places/{{placeSlug}}/reviews?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "places", "{{placeSlug}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Foods (Admin)",
+      "item": [
+        {
+          "name": "Create Food",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/foods",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bánh mì Hội An\",\n  \"slug\": \"banh-mi-hoi-an\",\n  \"location\": \"Hội An, Quảng Nam\",\n  \"description\": \"Bánh mì nổi tiếng thế giới\",\n  \"thumbnailUrl\": \"https://example.com/banhmi.jpg\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('foodId', res.data.id);",
+                "  pm.collectionVariables.set('foodSlug', res.data.slug);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Update Food",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/foods/{{foodId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bánh mì Hội An\",\n  \"location\": \"Hội An, Quảng Nam\",\n  \"description\": \"Cập nhật mô tả\",\n  \"thumbnailUrl\": \"https://example.com/banhmi-v2.jpg\",\n  \"isActive\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Food",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/foods/{{foodId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Foods (Public)",
+      "item": [
+        {
+          "name": "List Foods",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/foods"
+          }
+        },
+        {
+          "name": "Get Food Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/foods/{{foodSlug}}"
+          }
+        },
+        {
+          "name": "Get Food Reviews",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/foods/{{foodSlug}}/reviews?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "foods", "{{foodSlug}}", "reviews"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "News (Admin)",
+      "item": [
+        {
+          "name": "Create News",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/news",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Top 10 điểm du lịch hè 2025\",\n  \"slug\": \"top-10-diem-du-lich-he-2025\",\n  \"content\": \"Nội dung bài viết chi tiết...\",\n  \"thumbnailUrl\": \"https://example.com/news-thumb.jpg\"\n}"
+            }
+          },
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "const res = pm.response.json();",
+                "if (res.data) {",
+                "  pm.collectionVariables.set('newsId', res.data.id);",
+                "  pm.collectionVariables.set('newsSlug', res.data.slug);",
+                "}"
+              ]
+            }
+          }]
+        },
+        {
+          "name": "Update News",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/news/{{newsId}}",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Top 10 điểm du lịch hè 2025 (Cập nhật)\",\n  \"content\": \"Nội dung cập nhật...\",\n  \"thumbnailUrl\": \"https://example.com/news-thumb-v2.jpg\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Publish News",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/news/{{newsId}}/publish",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        },
+        {
+          "name": "Delete News",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/admin/news/{{newsId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "News (Public)",
+      "item": [
+        {
+          "name": "List Published News",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/news?page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "news"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get News Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/news/{{newsSlug}}"
           }
         }
       ]

@@ -5,18 +5,34 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.sun.bookingtours.entity.Review;
 import com.sun.bookingtours.entity.enums.TargetType;
 
-public interface ReviewRepository extends JpaRepository<Review, UUID> {
+import jakarta.persistence.LockModeType;
+
+public interface ReviewRepository extends JpaRepository<Review, UUID>, JpaSpecificationExecutor<Review> {
 
     // Kiểm tra user đã review target này chưa — tương ứng UNIQUE constraint trên DB
     // Dùng exists thay vì findBy → DB chỉ cần tìm 1 row rồi dừng, không fetch toàn bộ entity
     boolean existsByUserIdAndTargetTypeAndTargetId(UUID userId, TargetType targetType, UUID targetId);
 
-Optional<Review> findByIdAndUserId(UUID id, UUID userId);
+    Optional<Review> findByIdAndUserId(UUID id, UUID userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM Review r WHERE r.id = :id")
+    Optional<Review> findByIdForUpdate(@Param("id") UUID id);
+
+    // @EntityGraph → JOIN FETCH user trong 1 query, tránh N+1 khi list reviews
+    @EntityGraph(attributePaths = {"user"})
+    Page<Review> findAll(Specification<Review> spec, Pageable pageable);
 
     Page<Review> findByUserId(UUID userId, Pageable pageable);
 

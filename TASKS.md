@@ -185,49 +185,49 @@
 ## PHASE 6 — Content (Places, Foods, News)
 
 ### T17 — Places & Foods
-- [ ] Entity `Place`, `Food`
-- [ ] Admin CRUD: `POST/PUT/DELETE /api/admin/places`
-- [ ] Admin CRUD: `POST/PUT/DELETE /api/admin/foods`
-- [ ] Public: `GET /api/places` — list (filter `is_active=true`)
-- [ ] Public: `GET /api/places/{slug}` — chi tiết
-- [ ] Public: `GET /api/foods`, `GET /api/foods/{slug}` — tương tự
+- [x] Entity `Place`, `Food`
+- [x] Admin CRUD: `POST/PUT/DELETE /api/admin/places`
+- [x] Admin CRUD: `POST/PUT/DELETE /api/admin/foods`
+- [x] Public: `GET /api/places` — list (filter `is_active=true`)
+- [x] Public: `GET /api/places/{slug}` — chi tiết
+- [x] Public: `GET /api/foods`, `GET /api/foods/{slug}` — tương tự
 
 ### T18 — News
-- [ ] Entity `News`
-- [ ] `POST /api/admin/news` — tạo bài viết (`is_published=false` mặc định)
-- [ ] `PUT /api/admin/news/{id}` — cập nhật
-- [ ] `DELETE /api/admin/news/{id}` — xóa
-- [ ] `PATCH /api/admin/news/{id}/publish` — publish (`is_published=true`, set `published_at`)
-- [ ] `GET /api/news` — list bài đã published (Guest + User), pagination
-- [ ] `GET /api/news/{slug}` — chi tiết bài viết
+- [x] Entity `News`
+- [x] `POST /api/admin/news` — tạo bài viết (`is_published=false` mặc định)
+- [x] `PUT /api/admin/news/{id}` — cập nhật
+- [x] `DELETE /api/admin/news/{id}` — xóa
+- [x] `PATCH /api/admin/news/{id}/publish` — publish (`is_published=true`, set `published_at`)
+- [x] `GET /api/news` — list bài đã published (Guest + User), pagination
+- [x] `GET /api/news/{slug}` — chi tiết bài viết
 
 ---
 
 ## PHASE 7 — Admin Management API
 
 ### T19 — Admin: Manage Users
-- [ ] `GET /api/admin/users` — list users (filter: `role`, `isActive`, search `name/email`, pagination)
-- [ ] `GET /api/admin/users/{id}` — chi tiết user (kèm bookings gần đây)
-- [ ] `PATCH /api/admin/users/{id}/activate` — kích hoạt tài khoản (`is_active=true`)
-- [ ] `PATCH /api/admin/users/{id}/deactivate` — khóa tài khoản (`is_active=false`)
+- [x] `GET /api/admin/users` — list users (filter: `role`, `isActive`, search `name/email`, pagination)
+- [x] `GET /api/admin/users/{id}` — chi tiết user (kèm bookings gần đây)
+- [x] `PATCH /api/admin/users/{id}/activate` — kích hoạt tài khoản (`is_active=true`)
+- [x] `PATCH /api/admin/users/{id}/deactivate` — khóa tài khoản (`is_active=false`)
 
 ### T20 — Admin: Manage Bookings
-- [ ] `GET /api/admin/bookings` — list tất cả bookings (filter: `status`, `fromDate`, `toDate`, `userId`, pagination)
-- [ ] `GET /api/admin/bookings/{id}` — chi tiết booking (kèm payment info)
-- [ ] `PATCH /api/admin/bookings/{id}/complete` — đánh dấu `COMPLETED`
-- [ ] `PATCH /api/admin/bookings/{id}/cancel` — hủy booking bởi admin
+- [x] `GET /api/admin/bookings` — list tất cả bookings (filter: `status`, `fromDate`, `toDate`, `userId`, pagination)
+- [x] `GET /api/admin/bookings/{id}` — chi tiết booking (kèm payment info)
+- [x] `PATCH /api/admin/bookings/{id}/complete` — đánh dấu `COMPLETED`
+- [x] `PATCH /api/admin/bookings/{id}/cancel` — hủy booking bởi admin
 
 ### T21 — Admin: Manage Reviews
-- [ ] `GET /api/admin/reviews` — list reviews (filter: `isApproved`, `targetType`, pagination)
-- [ ] `PATCH /api/admin/reviews/{id}/approve` — duyệt review (`is_approved=true`)
-- [ ] `PATCH /api/admin/reviews/{id}/reject` — từ chối / xóa review
-- [ ] `DELETE /api/admin/reviews/{id}` — xóa review
+- [x] `GET /api/admin/reviews` — list reviews (filter: `isApproved`, `targetType`, pagination)
+- [x] `PATCH /api/admin/reviews/{id}/approve` — duyệt review (`is_approved=true`)
+- [x] `PATCH /api/admin/reviews/{id}/reject` — từ chối / xóa review
+- [x] `DELETE /api/admin/reviews/{id}` — xóa review
 
 ### T22 — Admin: Revenue Report
-- [ ] `GET /api/admin/revenue` — tổng quan
+- [x] `GET /api/admin/revenue` — tổng quan
   - Params: `from`, `to` (date range)
   - Response: tổng doanh thu, số booking theo status, doanh thu theo tháng (group by)
-- [ ] `GET /api/admin/revenue/tours` — top tours theo doanh thu trong kỳ
+- [x] `GET /api/admin/revenue/tours` — top tours theo doanh thu trong kỳ
 
 ---
 
@@ -277,15 +277,15 @@
 ## PHASE 9 — Cross-cutting Concerns
 
 ### T30 — Activity Log
-- [ ] Entity `Activity`
-- [ ] `ActivityService.log(userId, bookingId, type, metadata)` — tái sử dụng ở T10, T11, T12
-- [ ] `GET /api/users/me/activities` — user xem lịch sử hoạt động (pagination)
-- [ ] `GET /api/admin/activities` — admin xem tất cả (filter `type`, `userId`)
+- [x] Entity `Activity`
+- [x] `ActivityService.log(userId, bookingId, type, metadata)` — tái sử dụng ở T10, T11, T12
+- [x] `GET /api/users/me/activities` — user xem lịch sử hoạt động (pagination)
+- [x] `GET /api/admin/activities` — admin xem tất cả (filter `type`, `userId`)
 
 ### T31 — Validation & Error Handling
-- [ ] Annotation `@Valid` trên tất cả `@RequestBody`
-- [ ] Chuẩn hóa error response: `{ status, code, message, errors[] }`
-- [ ] Handle: 400 validation, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 500 server error
+- [x] Annotation `@Valid` trên tất cả `@RequestBody`
+- [x] Chuẩn hóa error response: `{ status, code, message, errors[] }`
+- [x] Handle: 400 validation, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 500 server error
 
 ### T32 — Testing
 - [ ] Unit test `AuthService` (register, login, refresh token)
@@ -351,9 +351,9 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 3 — Category & Tour | T06, T07, T08, T09 | ✅ T06 T07 T08 T09 |
 | 4 — Booking & Payment | T10, T11 | ✅ |
 | 5 — Social | T12, T13, T14, T15, T16 | ✅ |
-| 6 — Content | T17, T18 | ⬜ |
-| 7 — Admin API | T19, T20, T21, T22 | ⬜ |
+| 6 — Content | T17, T18 | ✅ |
+| 7 — Admin API | T19, T20, T21, T22 | ✅ |
 | 8 — Admin UI | T23–T29 | ⬜ |
-| 9 — Cross-cutting | T30, T31, T32 | ⬜ |
+| 9 — Cross-cutting | T30, T31, T32 | ✅ T30 T31 · ⬜ T32 |
 
 > ⬜ Not started · 🔄 In progress · ✅ Done

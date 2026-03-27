@@ -14,4 +14,8 @@ public interface FoodRepository extends JpaRepository<Food, UUID> {
     List<Food> findAllByIdIn(List<UUID> ids);
 
     Optional<Food> findBySlug(String slug);
+
+    List<Food> findAllByIsActiveTrue();
+
+    boolean existsBySlug(String slug);
 }
