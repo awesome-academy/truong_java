@@ -55,6 +55,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiResponse<?>> handleForbiddenException(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(PessimisticLockingFailureException.class)
     public ResponseEntity<ApiResponse<?>> handlePessimisticLocking(PessimisticLockingFailureException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error("Thao tác đang được xử lý, vui lòng thử lại"));

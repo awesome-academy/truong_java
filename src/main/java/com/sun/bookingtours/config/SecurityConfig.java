@@ -40,9 +40,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()  // Spring Boot forward lỗi unhandled về /error — phải permit
+                // Các endpoint /me phải đứng trước rule permitAll bên dưới
+                // vì Spring Security match rule đầu tiên thắng
+                .requestMatchers(HttpMethod.GET, "/api/reviews/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/tours/*/ratings/me").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/tours/**", "/api/places/**",
                         "/api/foods/**", "/api/news/**", "/api/reviews/**",
-                        "/api/categories/**").permitAll()
+                        "/api/categories/**", "/api/comments").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

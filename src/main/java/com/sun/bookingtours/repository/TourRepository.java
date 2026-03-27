@@ -29,12 +29,9 @@ public interface TourRepository extends JpaRepository<Tour, UUID>, JpaSpecificat
     """)
     Optional<Tour> findBySlugWithDetails(@Param("slug") String slug);
 
-    // Tìm theo id — dùng cho admin (không cần filter deleted)
-    @Query("""
-        SELECT t FROM Tour t
-        LEFT JOIN FETCH t.images
-        WHERE t.id = :id
-    """)
+    // Native query — bypass @SQLRestriction, admin có thể xem tour đã soft-delete
+    // images lazy-load trong @Transactional, không cần JOIN FETCH ở đây
+    @Query(value = "SELECT * FROM tours WHERE id = :id", nativeQuery = true)
     Optional<Tour> findByIdWithDetails(@Param("id") UUID id);
 
     // Public list: chỉ ACTIVE, chưa bị xóa, có pagination
