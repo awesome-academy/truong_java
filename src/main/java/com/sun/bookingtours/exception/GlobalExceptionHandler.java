@@ -1,6 +1,7 @@
 package com.sun.bookingtours.exception;
 
-import com.sun.bookingtours.dto.response.ErrorResponse;
+import java.util.List;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.List;
+import com.sun.bookingtours.dto.response.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -71,11 +72,6 @@ public class GlobalExceptionHandler {
                         .code("UNAUTHORIZED")
                         .message(ex.getMessage())
                         .build());
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiResponse<?>> handleForbiddenException(ForbiddenException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(ex.getMessage()));
     }
 
     // 403 — đã login nhưng không đủ quyền (USER cố vào /api/admin/...)
