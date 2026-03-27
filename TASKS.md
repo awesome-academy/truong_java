@@ -277,15 +277,15 @@
 ## PHASE 9 — Cross-cutting Concerns
 
 ### T30 — Activity Log
-- [ ] Entity `Activity`
-- [ ] `ActivityService.log(userId, bookingId, type, metadata)` — tái sử dụng ở T10, T11, T12
-- [ ] `GET /api/users/me/activities` — user xem lịch sử hoạt động (pagination)
-- [ ] `GET /api/admin/activities` — admin xem tất cả (filter `type`, `userId`)
+- [x] Entity `Activity`
+- [x] `ActivityService.log(userId, bookingId, type, metadata)` — tái sử dụng ở T10, T11, T12
+- [x] `GET /api/users/me/activities` — user xem lịch sử hoạt động (pagination)
+- [x] `GET /api/admin/activities` — admin xem tất cả (filter `type`, `userId`)
 
 ### T31 — Validation & Error Handling
-- [ ] Annotation `@Valid` trên tất cả `@RequestBody`
-- [ ] Chuẩn hóa error response: `{ status, code, message, errors[] }`
-- [ ] Handle: 400 validation, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 500 server error
+- [x] Annotation `@Valid` trên tất cả `@RequestBody`
+- [x] Chuẩn hóa error response: `{ status, code, message, errors[] }`
+- [x] Handle: 400 validation, 401 unauthorized, 403 forbidden, 404 not found, 409 conflict, 500 server error
 
 ### T32 — Testing
 - [ ] Unit test `AuthService` (register, login, refresh token)
@@ -354,6 +354,6 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 6 — Content | T17, T18 | ✅ |
 | 7 — Admin API | T19, T20, T21, T22 | ✅ |
 | 8 — Admin UI | T23–T29 | ⬜ |
-| 9 — Cross-cutting | T30, T31, T32 | ⬜ |
+| 9 — Cross-cutting | T30, T31, T32 | ✅ T30 T31 · ⬜ T32 |
 
 > ⬜ Not started · 🔄 In progress · ✅ Done
