@@ -1,5 +1,6 @@
 package com.sun.bookingtours.config;
 
+import com.sun.bookingtours.security.AdminCookieAuthFilter;
 import com.sun.bookingtours.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -21,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AdminCookieAuthFilter adminCookieAuthFilter;
 
     /*
      * csrf.disable()          — REST API dùng JWT nên không cần CSRF protection
@@ -37,7 +40,16 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex
+                // Admin web routes: redirect về login page thay vì trả 401 JSON
+                .defaultAuthenticationEntryPointFor(
+                    new LoginUrlAuthenticationEntryPoint("/admin/login"),
+                    request -> request.getServletPath().startsWith("/admin")
+                )
+            )
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/admin/login").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/error").permitAll()  // Spring Boot forward lỗi unhandled về /error — phải permit
                 // Các endpoint /me phải đứng trước rule permitAll bên dưới
@@ -49,6 +61,7 @@ public class SecurityConfig {
                         "/api/categories/**", "/api/comments").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
+            .addFilterBefore(adminCookieAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
