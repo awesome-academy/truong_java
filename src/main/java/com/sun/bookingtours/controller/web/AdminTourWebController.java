@@ -10,6 +10,7 @@ import com.sun.bookingtours.entity.enums.TourStatus;
 import com.sun.bookingtours.service.CategoryService;
 import com.sun.bookingtours.service.TourScheduleService;
 import com.sun.bookingtours.service.TourService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -81,7 +83,16 @@ public class AdminTourWebController {
     }
 
     @PostMapping
-    public String create(@ModelAttribute TourRequest request, RedirectAttributes redirectAttrs) {
+    public String create(@Valid @ModelAttribute TourRequest request,
+                         BindingResult bindingResult,
+                         RedirectAttributes redirectAttrs) {
+        if (bindingResult.hasErrors()) {
+            redirectAttrs.addFlashAttribute("errorMessage",
+                    bindingResult.getFieldErrors().stream()
+                            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                            .findFirst().orElse("Dữ liệu không hợp lệ."));
+            return "redirect:/admin/tours/new";
+        }
         try {
             TourResponse tour = tourService.create(request);
             redirectAttrs.addFlashAttribute("successMessage", "Tạo tour thành công.");
@@ -115,8 +126,16 @@ public class AdminTourWebController {
 
     @PostMapping("/{id}/edit")
     public String update(@PathVariable UUID id,
-                         @ModelAttribute TourRequest request,
+                         @Valid @ModelAttribute TourRequest request,
+                         BindingResult bindingResult,
                          RedirectAttributes redirectAttrs) {
+        if (bindingResult.hasErrors()) {
+            redirectAttrs.addFlashAttribute("errorMessage",
+                    bindingResult.getFieldErrors().stream()
+                            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                            .findFirst().orElse("Dữ liệu không hợp lệ."));
+            return "redirect:/admin/tours/" + id + "/edit";
+        }
         try {
             tourService.update(id, request);
             redirectAttrs.addFlashAttribute("successMessage", "Cập nhật tour thành công.");

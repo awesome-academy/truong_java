@@ -16,9 +16,7 @@
                     <li class="breadcrumb-item active" th:text="${user.fullName != null ? user.fullName : user.email}"></li>
                 </ol>
             </nav>
-            <a th:href="@{/admin/logout}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-            </a>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
         </div>
 
         <div class="p-4">

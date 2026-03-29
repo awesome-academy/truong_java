@@ -13,9 +13,7 @@
                     <li class="breadcrumb-item active">Quản lý Users</li>
                 </ol>
             </nav>
-            <a th:href="@{/admin/logout}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-            </a>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
         </div>
 
         <div class="p-4">
@@ -124,7 +122,9 @@
                                 <a class="page-link"
                                    th:href="@{/admin/users(page=${users.number - 1},size=${users.size},search=${search},role=${role},isActive=${isActive})}">&laquo;</a>
                             </li>
-                            <li class="page-item" th:each="i : ${#numbers.sequence(0, users.totalPages - 1)}"
+                            <li class="page-item" th:each="i : ${#numbers.sequence(
+                                    T(java.lang.Math).max(0, users.number - 2),
+                                    T(java.lang.Math).min(users.totalPages - 1, users.number + 2))}"
                                 th:classappend="${i == users.number} ? 'active'">
                                 <a class="page-link" th:text="${i + 1}"
                                    th:href="@{/admin/users(page=${i},size=${users.size},search=${search},role=${role},isActive=${isActive})}"></a>

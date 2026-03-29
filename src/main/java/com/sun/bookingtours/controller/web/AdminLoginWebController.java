@@ -52,6 +52,7 @@ public class AdminLoginWebController {
 
             Cookie cookie = new Cookie("admin_token", auth.getAccessToken());
             cookie.setHttpOnly(true);
+            cookie.setSecure(true);
             cookie.setPath("/admin");
             cookie.setMaxAge(3600); // 1 giờ
             response.addCookie(cookie);
@@ -62,10 +63,11 @@ public class AdminLoginWebController {
         }
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public String logout(HttpServletResponse response) {
         Cookie cookie = new Cookie("admin_token", "");
         cookie.setHttpOnly(true);
+        cookie.setSecure(true);
         cookie.setPath("/admin");
         cookie.setMaxAge(0); // xóa cookie
         response.addCookie(cookie);

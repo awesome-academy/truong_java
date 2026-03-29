@@ -3,9 +3,11 @@ package com.sun.bookingtours.controller.web;
 import com.sun.bookingtours.dto.request.CategoryRequest;
 import com.sun.bookingtours.dto.response.CategoryResponse;
 import com.sun.bookingtours.service.CategoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,7 +51,16 @@ public class AdminCategoryWebController {
     }
 
     @PostMapping
-    public String create(@ModelAttribute CategoryRequest request, RedirectAttributes redirectAttrs) {
+    public String create(@Valid @ModelAttribute CategoryRequest request,
+                         BindingResult bindingResult,
+                         RedirectAttributes redirectAttrs) {
+        if (bindingResult.hasErrors()) {
+            redirectAttrs.addFlashAttribute("errorMessage",
+                    bindingResult.getFieldErrors().stream()
+                            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                            .findFirst().orElse("Dữ liệu không hợp lệ."));
+            return "redirect:/admin/categories/new";
+        }
         try {
             categoryService.create(request);
             redirectAttrs.addFlashAttribute("successMessage", "Tạo category thành công.");
@@ -62,7 +73,10 @@ public class AdminCategoryWebController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable UUID id, Model model) {
         Map<String, Object> category = categoryService.getCategoryForEdit(id);
-        List<Map<String, Object>> parentOptions = buildParentOptions(id.toString());
+        // getTree() được gọi 1 lần duy nhất, dùng chung cho cả build options
+        List<CategoryResponse> tree = categoryService.getTree();
+        List<Map<String, Object>> parentOptions = new ArrayList<>();
+        buildOptions(tree, parentOptions, 0, id.toString());
         model.addAttribute("category", category);
         model.addAttribute("parentOptions", parentOptions);
         model.addAttribute("isEdit", true);
@@ -72,8 +86,16 @@ public class AdminCategoryWebController {
 
     @PostMapping("/{id}/edit")
     public String update(@PathVariable UUID id,
-                         @ModelAttribute CategoryRequest request,
+                         @Valid @ModelAttribute CategoryRequest request,
+                         BindingResult bindingResult,
                          RedirectAttributes redirectAttrs) {
+        if (bindingResult.hasErrors()) {
+            redirectAttrs.addFlashAttribute("errorMessage",
+                    bindingResult.getFieldErrors().stream()
+                            .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                            .findFirst().orElse("Dữ liệu không hợp lệ."));
+            return "redirect:/admin/categories/" + id + "/edit";
+        }
         try {
             categoryService.update(id, request);
             redirectAttrs.addFlashAttribute("successMessage", "Cập nhật category thành công.");

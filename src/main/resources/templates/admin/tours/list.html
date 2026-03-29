@@ -13,9 +13,7 @@
                     <li class="breadcrumb-item active">Quản lý Tours</li>
                 </ol>
             </nav>
-            <a th:href="@{/admin/logout}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
-            </a>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
         </div>
 
         <div class="p-4">
@@ -116,7 +114,9 @@
                                 <a class="page-link"
                                    th:href="@{/admin/tours(page=${tours.number - 1},size=${tours.size},status=${status})}">&laquo;</a>
                             </li>
-                            <li class="page-item" th:each="i : ${#numbers.sequence(0, tours.totalPages - 1)}"
+                            <li class="page-item" th:each="i : ${#numbers.sequence(
+                                    T(java.lang.Math).max(0, tours.number - 2),
+                                    T(java.lang.Math).min(tours.totalPages - 1, tours.number + 2))}"
                                 th:classappend="${i == tours.number} ? 'active'">
                                 <a class="page-link" th:text="${i + 1}"
                                    th:href="@{/admin/tours(page=${i},size=${tours.size},status=${status})}"></a>

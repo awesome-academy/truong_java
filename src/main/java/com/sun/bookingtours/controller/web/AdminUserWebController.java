@@ -38,7 +38,10 @@ public class AdminUserWebController {
                             @RequestParam(defaultValue = "20") int size,
                             Model model) {
 
-        Role roleEnum = (role != null && !role.isBlank()) ? Role.valueOf(role) : null;
+        Role roleEnum = null;
+        if (role != null && !role.isBlank()) {
+            try { roleEnum = Role.valueOf(role); } catch (IllegalArgumentException ignored) {}
+        }
         Page<AdminUserResponse> users = adminUserService.listUsers(
                 roleEnum, isActive, search,
                 PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
