@@ -3,7 +3,10 @@ package com.sun.bookingtours.controller.web;
 import com.sun.bookingtours.dto.request.LoginRequest;
 import com.sun.bookingtours.dto.response.AuthResponse;
 import com.sun.bookingtours.service.AuthService;
+import com.sun.bookingtours.service.RevokedAccessTokenService;
+import com.sun.bookingtours.security.JwtTokenProvider;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -19,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class AdminLoginWebController {
 
     private final AuthService authService;
+    private final RevokedAccessTokenService revokedAccessTokenService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping({"", "/"})
     public String root() {
@@ -64,13 +69,30 @@ public class AdminLoginWebController {
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response) {
+    public String logout(HttpServletRequest request, HttpServletResponse response) {
+        // Revoke token trên server trước khi xóa cookie —
+        // ngăn reuse token nếu attacker đã capture được string trước khi logout
+        String token = getTokenFromCookie(request);
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            revokedAccessTokenService.revoke(token);
+        }
+
         Cookie cookie = new Cookie("admin_token", "");
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/admin");
-        cookie.setMaxAge(0); // xóa cookie
+        cookie.setMaxAge(0);
         response.addCookie(cookie);
         return "redirect:/admin/login";
+    }
+
+    private String getTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("admin_token".equals(c.getName())) return c.getValue();
+            }
+        }
+        return null;
     }
 }

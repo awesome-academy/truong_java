@@ -27,11 +27,13 @@ public class SecurityConfig {
     private final AdminCookieAuthFilter adminCookieAuthFilter;
 
     /*
-     * csrf.disable()          — REST API dùng JWT nên không cần CSRF protection
-     * STATELESS               — Spring không tạo session, mỗi request tự xác thực qua JWT
+     * CookieCsrfTokenRepository — lưu CSRF token trong cookie XSRF-TOKEN, hoạt động với STATELESS
+     *                             Thymeleaf tự inject _csrf hidden field vào form có th:action
+     *                             /api/** được exempt vì REST dùng JWT (stateless, không cần CSRF)
+     * STATELESS               — Spring không tạo session, mỗi request tự xác thực qua JWT hoặc cookie
      * permitAll()             — Không cần token, ai cũng gọi được
      * hasRole("ADMIN")        — Spring tự check ROLE_ADMIN trong authorities của UserPrincipal
-     * addFilterBefore()       — Đặt JwtAuthenticationFilter chạy trước filter mặc định của Spring
+     * addFilterBefore()       — Đặt custom filter chạy trước UsernamePasswordAuthenticationFilter
      * PasswordEncoder         — BCrypt hash password khi register, verify khi login
      * AuthenticationManager   — Spring dùng để xác thực username/password lúc login
      */

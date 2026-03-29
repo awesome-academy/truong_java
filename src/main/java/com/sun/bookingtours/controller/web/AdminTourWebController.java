@@ -50,6 +50,9 @@ public class AdminTourWebController {
                        @RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "15") int size,
                        Model model) {
+        page = Math.max(page, 0);
+        size = Math.min(Math.max(size, 1), 100);
+
         TourStatus tourStatus = null;
         if (status != null && !status.isBlank()) {
             try { tourStatus = TourStatus.valueOf(status); } catch (IllegalArgumentException ignored) {}
@@ -208,7 +211,8 @@ public class AdminTourWebController {
     public String editScheduleForm(@PathVariable UUID tourId,
                                    @PathVariable UUID scheduleId,
                                    Model model) {
-        TourScheduleResponse schedule = scheduleService.getDetail(scheduleId);
+        // getDetailForTour validate scheduleId thuộc tourId — throw 404 nếu không khớp
+        TourScheduleResponse schedule = scheduleService.getDetailForTour(tourId, scheduleId);
         model.addAttribute("tourId", tourId.toString());
         model.addAttribute("schedule", scheduleToMap(schedule));
         model.addAttribute("isEdit", true);
@@ -226,7 +230,8 @@ public class AdminTourWebController {
                                  RedirectAttributes redirectAttrs) {
         try {
             TourScheduleRequest req = new TourScheduleRequest(departureDate, returnDate, totalSlots, priceOverride);
-            scheduleService.update(scheduleId, req);
+            // updateForTour validate + update trong 1 DB round-trip, chặn IDOR
+            scheduleService.updateForTour(tourId, scheduleId, req);
             redirectAttrs.addFlashAttribute("successMessage", "Cập nhật lịch thành công.");
         } catch (Exception e) {
             redirectAttrs.addFlashAttribute("errorMessage", e.getMessage());

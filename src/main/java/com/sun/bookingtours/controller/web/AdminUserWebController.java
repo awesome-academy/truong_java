@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.sun.bookingtours.security.UserPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +40,9 @@ public class AdminUserWebController {
                             @RequestParam(defaultValue = "0") int page,
                             @RequestParam(defaultValue = "20") int size,
                             Model model) {
+
+        page = Math.max(page, 0);
+        size = Math.min(Math.max(size, 1), 100);
 
         Role roleEnum = null;
         if (role != null && !role.isBlank()) {
@@ -111,6 +117,11 @@ public class AdminUserWebController {
 
     @PostMapping("/{id}/deactivate")
     public String deactivate(@PathVariable UUID id, RedirectAttributes redirectAttrs) {
+        UserPrincipal currentUser = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (id.equals(currentUser.getId())) {
+            redirectAttrs.addFlashAttribute("errorMessage", "Không thể tự khóa tài khoản của mình.");
+            return "redirect:/admin/users/" + id;
+        }
         adminUserService.deactivate(id);
         redirectAttrs.addFlashAttribute("successMessage", "Tài khoản đã bị khóa.");
         return "redirect:/admin/users/" + id;
