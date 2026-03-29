@@ -168,6 +168,32 @@ public class TourService {
         return tourMapper.toResponse(tour);
     }
 
+    // ---- Admin API ----
+
+    @Transactional(readOnly = true)
+    public Page<TourResponse> adminList(TourStatus status, Pageable pageable) {
+        // Hiển thị tất cả tour chưa bị xóa, filter thêm status nếu có
+        Specification<Tour> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        return tourRepository.findAll(spec, pageable).map(tourMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public TourResponse getAdminDetail(UUID id) {
+        Tour tour = findById(id);
+        TourResponse response = tourMapper.toResponse(tour);
+        // Admin cần thấy TẤT CẢ schedules, không chỉ OPEN như public API
+        List<TourScheduleResponse> schedules = scheduleRepository
+                .findByTourId(tour.getId())
+                .stream()
+                .map(scheduleMapper::toResponse)
+                .toList();
+        response.setSchedules(schedules);
+        return response;
+    }
+
     // ---- Public API (Guest + User) ----
 
     @Transactional(readOnly = true)

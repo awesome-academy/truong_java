@@ -112,6 +112,21 @@ public class CategoryService {
         category.setActive(false);
     }
 
+    // Trả Map thay vì DTO — tránh SpEL restriction của Spring Framework 7 trong Thymeleaf
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getCategoryForEdit(UUID id) {
+        Category cat = findById(id);
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("id", cat.getId().toString());
+        m.put("name", cat.getName() != null ? cat.getName() : "");
+        m.put("slug", cat.getSlug() != null ? cat.getSlug() : "");
+        m.put("description", cat.getDescription() != null ? cat.getDescription() : "");
+        m.put("imageUrl", cat.getImageUrl() != null ? cat.getImageUrl() : "");
+        m.put("active", cat.isActive());
+        m.put("parentId", cat.getParent() != null ? cat.getParent().getId().toString() : "");
+        return m;
+    }
+
     // ---- private helpers ----
 
     private Category findById(UUID id) {

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head(${isEdit} ? 'Sửa lịch khởi hành' : 'Thêm lịch khởi hành')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/tours}" class="text-decoration-none">Tours</a></li>
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/admin/tours/{id}(id=${tourId})}" class="text-decoration-none">Chi tiết</a>
+                    </li>
+                    <li class="breadcrumb-item active" th:text="${isEdit} ? 'Sửa lịch' : 'Thêm lịch'"></li>
+                </ol>
+            </nav>
+            <a th:href="@{/admin/logout}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+            </a>
+        </div>
+
+        <div class="p-4" style="max-width:560px">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="@{/admin/tours/{id}(id=${tourId})}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <h5 class="fw-bold mb-0" th:text="${isEdit} ? 'Sửa lịch khởi hành' : 'Thêm lịch khởi hành'"></h5>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show py-2">
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form th:action="${isEdit}
+                            ? @{/admin/tours/{tId}/schedules/{sId}/edit(tId=${tourId},sId=${schedule.id})}
+                            : @{/admin/tours/{tId}/schedules(tId=${tourId})}"
+                          method="post">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-medium">Ngày khởi hành <span class="text-danger">*</span></label>
+                                <!-- type="date" gửi value dạng yyyy-MM-dd — Spring @DateTimeFormat(iso=DATE) parse được -->
+                                <input type="date" name="departureDate" class="form-control"
+                                       th:value="${schedule.departureDate}" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-medium">Ngày về <span class="text-danger">*</span></label>
+                                <input type="date" name="returnDate" class="form-control"
+                                       th:value="${schedule.returnDate}" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-6">
+                                <label class="form-label fw-medium">Tổng slot <span class="text-danger">*</span></label>
+                                <input type="number" name="totalSlots" class="form-control"
+                                       th:value="${schedule.totalSlots}" min="1" required>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-medium">Giá riêng (VNĐ)</label>
+                                <input type="number" name="priceOverride" class="form-control"
+                                       th:value="${schedule.priceOverride}" min="0" step="1000"
+                                       placeholder="Để trống = dùng giá tour">
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-lg me-1"></i>
+                                <span th:text="${isEdit} ? 'Cập nhật' : 'Tạo lịch'"></span>
+                            </button>
+                            <a th:href="@{/admin/tours/{id}(id=${tourId})}" class="btn btn-outline-secondary">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

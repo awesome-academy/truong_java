@@ -70,6 +70,16 @@ public class TourScheduleService {
         return scheduleMapper.toResponse(schedule);
     }
 
+    @Transactional(readOnly = true)
+    public TourScheduleResponse getDetail(UUID scheduleId) {
+        return scheduleMapper.toResponse(findById(scheduleId));
+    }
+
+    @Transactional(readOnly = true)
+    public UUID getTourId(UUID scheduleId) {
+        return findById(scheduleId).getTour().getId();
+    }
+
     // ---- private helpers ----
 
     private TourSchedule findById(UUID id) {

@@ -55,9 +55,14 @@
            th:class="${currentPage == 'users'} ? 'sidebar-link active' : 'sidebar-link'">
             <i class="bi bi-people"></i> Quản lý Users
         </a>
-        <span class="sidebar-link text-secondary opacity-50" style="cursor:not-allowed">
-            <i class="bi bi-map"></i> Tours &amp; Categories
-        </span>
+        <a th:href="@{/admin/categories}"
+           th:class="${currentPage == 'categories'} ? 'sidebar-link active' : 'sidebar-link'">
+            <i class="bi bi-tags"></i> Categories
+        </a>
+        <a th:href="@{/admin/tours}"
+           th:class="${currentPage == 'tours'} ? 'sidebar-link active' : 'sidebar-link'">
+            <i class="bi bi-map"></i> Quản lý Tours
+        </a>
         <span class="sidebar-link text-secondary opacity-50" style="cursor:not-allowed">
             <i class="bi bi-calendar-check"></i> Bookings
         </span>

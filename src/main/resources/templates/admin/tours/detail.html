@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head('Chi tiết Tour')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/tours}" class="text-decoration-none">Tours</a></li>
+                    <li class="breadcrumb-item active" th:text="${tour.title}"></li>
+                </ol>
+            </nav>
+            <a th:href="@{/admin/logout}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+            </a>
+        </div>
+
+        <div class="p-4">
+
+            <!-- Flash messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show py-2 mb-3">
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show py-2 mb-3">
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Header actions -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <a th:href="@{/admin/tours}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h5 class="fw-bold mb-1" th:text="${tour.title}"></h5>
+                        <span class="text-muted small" th:text="${'/' + tour.slug}"></span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/admin/tours/{id}/edit(id=${tour.id})}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Sửa
+                    </a>
+                    <form th:action="@{/admin/tours/{id}/delete(id=${tour.id})}" method="post"
+                          onsubmit="return confirm('Xóa tour này? Hành động này không thể hoàn tác.')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i>Xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Tour info -->
+                <div class="col-lg-5">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent fw-medium">Thông tin tour</div>
+                        <div class="card-body">
+                            <dl class="row mb-0" style="font-size:.9rem">
+                                <dt class="col-5 text-muted fw-normal">Trạng thái</dt>
+                                <dd class="col-7">
+                                    <span th:class="${tour.status == 'ACTIVE'}   ? 'badge bg-success-subtle text-success border border-success-subtle' :
+                                                    (${tour.status == 'DRAFT'}   ? 'badge bg-secondary-subtle text-secondary border border-secondary-subtle' :
+                                                                                   'badge bg-warning-subtle text-warning border border-warning-subtle')"
+                                          th:text="${tour.status}"></span>
+                                </dd>
+                                <dt class="col-5 text-muted fw-normal">Category</dt>
+                                <dd class="col-7" th:text="${tour.categoryName}"></dd>
+                                <dt class="col-5 text-muted fw-normal">Giá cơ bản</dt>
+                                <dd class="col-7" th:text="${#numbers.formatDecimal(tour.basePrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></dd>
+                                <dt class="col-5 text-muted fw-normal">Số ngày</dt>
+                                <dd class="col-7" th:text="${tour.durationDays} + ' ngày'"></dd>
+                                <dt class="col-5 text-muted fw-normal">Sức chứa</dt>
+                                <dd class="col-7" th:text="${tour.maxParticipants} + ' người'"></dd>
+                                <dt class="col-5 text-muted fw-normal">Khởi hành</dt>
+                                <dd class="col-7" th:text="${tour.departureLocation != '' ? tour.departureLocation : '—'}"></dd>
+                                <dt class="col-5 text-muted fw-normal">Ngày tạo</dt>
+                                <dd class="col-7" th:text="${#temporals.format(tour.createdAt, 'dd/MM/yyyy HH:mm')}"></dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <!-- Đổi trạng thái -->
+                    <div class="card border-0 shadow-sm mt-3">
+                        <div class="card-header bg-transparent fw-medium">Đổi trạng thái</div>
+                        <div class="card-body d-flex gap-2 flex-wrap">
+                            <form th:action="@{/admin/tours/{id}/status(id=${tour.id})}" method="post">
+                                <input type="hidden" name="status" value="ACTIVE">
+                                <button type="submit" class="btn btn-sm btn-success"
+                                        th:disabled="${tour.status == 'ACTIVE'}">ACTIVE</button>
+                            </form>
+                            <form th:action="@{/admin/tours/{id}/status(id=${tour.id})}" method="post">
+                                <input type="hidden" name="status" value="DRAFT">
+                                <button type="submit" class="btn btn-sm btn-secondary"
+                                        th:disabled="${tour.status == 'DRAFT'}">DRAFT</button>
+                            </form>
+                            <form th:action="@{/admin/tours/{id}/status(id=${tour.id})}" method="post">
+                                <input type="hidden" name="status" value="INACTIVE">
+                                <button type="submit" class="btn btn-sm btn-warning"
+                                        th:disabled="${tour.status == 'INACTIVE'}">INACTIVE</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedules -->
+                <div class="col-lg-7">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                            <span class="fw-medium">Lịch khởi hành</span>
+                            <a th:href="@{/admin/tours/{tourId}/schedules/new(tourId=${tour.id})}"
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-lg me-1"></i>Thêm lịch
+                            </a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="font-size:.875rem">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Khởi hành</th>
+                                        <th>Về</th>
+                                        <th>Slots</th>
+                                        <th>Giá riêng</th>
+                                        <th>Trạng thái</th>
+                                        <th class="text-end pe-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${schedules.empty}">
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            Chưa có lịch khởi hành nào
+                                        </td>
+                                    </tr>
+                                    <tr th:each="s : ${schedules}">
+                                        <td class="ps-3" th:text="${s.departureDate}"></td>
+                                        <td th:text="${s.returnDate}"></td>
+                                        <td th:text="${s.totalSlots}"></td>
+                                        <td th:text="${s.priceOverride != '' ? s.priceOverride + ' ₫' : '—'}"></td>
+                                        <td>
+                                            <span th:class="${s.status == 'OPEN'}      ? 'badge bg-success-subtle text-success border border-success-subtle' :
+                                                            (${s.status == 'FULL'}      ? 'badge bg-warning-subtle text-warning border border-warning-subtle' :
+                                                                                          'badge bg-danger-subtle text-danger border border-danger-subtle')"
+                                                  th:text="${s.status}"></span>
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <a th:href="@{/admin/tours/{tId}/schedules/{sId}/edit(tId=${tour.id},sId=${s.id})}"
+                                               class="btn btn-sm btn-outline-primary">Sửa</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="card border-0 shadow-sm mt-4" th:if="${tour.description != ''}">
+                <div class="card-header bg-transparent fw-medium">Mô tả</div>
+                <div class="card-body" style="white-space:pre-wrap;font-size:.9rem" th:text="${tour.description}"></div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

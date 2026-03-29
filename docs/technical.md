@@ -896,3 +896,82 @@ public static Specification<Tour> hasCategory(UUID categoryId) {
 ```
 
 Hibernate tự sinh `JOIN` hoặc dùng FK trực tiếp tùy cấu hình quan hệ — mày không cần viết JOIN thủ công.
+
+---
+
+## 9. Spring Framework 7 — SpEL Property Access Restriction
+
+### 9.1 Vấn đề
+
+Spring Framework 7 (đi kèm Spring Boot 4) thắt chặt `ReflectivePropertyAccessor` trong SpEL. Khi Thymeleaf render `${user.fullName}`, nó dùng SpEL với `StandardEvaluationContext`. Trong Spring Framework 7, context này **không cho phép truy cập property via reflection trên các class không nằm trong whitelist** (java.\*, javax.\*, org.springframework.\*...).
+
+Lỗi điển hình:
+```
+SpelEvaluationException: EL1021E: Accessing member 'fullName' is forbidden
+for type 'class com.example.dto.response.AdminUserResponse' in this expression context
+```
+
+**Nguyên nhân sâu xa:** `AdminUserResponse` dùng Lombok `@Data @Builder` — Lombok generate bytecode lúc compile. Spring Framework 7's access checker xét class theo metadata, không nhận ra các class do annotation processor generate là "safe" → bị block.
+
+### 9.2 Tại sao Lombok @Data bị ảnh hưởng
+
+Thymeleaf dùng `ReflectivePropertyAccessor.read()` để gọi `getFullName()` trên `AdminUserResponse`. Spring Framework 7 thêm một bước kiểm tra trước khi gọi:
+
+```
+SpEL evaluates ${user.fullName}
+  └─ ReflectivePropertyAccessor.canRead(context, user, "fullName")
+       └─ checkTypeAccess(AdminUserResponse.class)  ← NEW in Spring Framework 7
+            └─ AdminUserResponse not in whitelist → FORBIDDEN (EL1021E)
+```
+
+Java records và class thuần (không Lombok) có thể không bị ảnh hưởng vì Spring Framework 7 có codepath riêng xử lý records.
+
+### 9.3 Solution: Dùng Map thay vì DTO trong Thymeleaf model
+
+Khi object là `Map`, SpEL chuyển sang dùng **`MapAccessor`** thay vì `ReflectivePropertyAccessor`:
+
+```
+SpEL evaluates ${user.fullName}
+  └─ MapAccessor.read(context, map, "fullName")
+       └─ map.get("fullName")  ← không có reflection, không bị restrict
+```
+
+**`MapAccessor` là Spring core class → luôn nằm trong whitelist → không bị access check.**
+
+**Pattern áp dụng trong Admin UI controllers:**
+
+```java
+// ❌ SAI — truyền DTO trực tiếp vào model
+model.addAttribute("user", adminUserResponse);  // SpEL sẽ bị block
+
+// ✅ ĐÚNG — convert sang Map trước
+Map<String, Object> userView = new LinkedHashMap<>();
+userView.put("fullName", user.getFullName());   // gọi getter ở tầng Java, không qua SpEL
+userView.put("role", user.getRole().name());    // convert enum → String để template chỉ so sánh string
+userView.put("active", user.isActive());
+model.addAttribute("user", userView);
+```
+
+Template syntax giữ nguyên vì SpEL `MapAccessor` hỗ trợ `${user.fullName}` trên Map (tương đương `map.get("fullName")`).
+
+**Lưu ý:** Convert enum sang String (`role.name()`) ở controller để tránh Spring Framework 7 block luôn cả enum method call trong SpEL:
+
+```java
+// ❌ Có thể bị block
+th:class="${user.role.name() == 'ADMIN'} ? '...' : '...'"
+
+// ✅ An toàn
+// Controller: map.put("role", user.getRole().name())
+// Template:   th:class="${user.role == 'ADMIN'} ? '...' : '...'"
+```
+
+### 9.4 Bảng so sánh
+
+| | Spring Framework 6 | Spring Framework 7 |
+|---|---|---|
+| Lombok `@Data` trong SpEL | ✅ OK | ❌ EL1021E |
+| Java record trong SpEL | ✅ OK | ✅ OK (RecordAccessor) |
+| `Map` trong SpEL | ✅ OK | ✅ OK (MapAccessor) |
+| `java.*` class trong SpEL | ✅ OK | ✅ OK (whitelist) |
+
+> Đây là **breaking change** không được document rõ trong Spring Boot 3→4 migration guide. Mọi Thymeleaf template truyền Lombok DTO vào model đều cần được convert sang Map hoặc Java record.
