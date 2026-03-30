@@ -1,5 +1,6 @@
 package com.sun.bookingtours.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -39,17 +40,21 @@ public class AdminCookieAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String token = getTokenFromCookie(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)
-                && !revokedAccessTokenService.isRevoked(jwtTokenProvider.getJtiFromToken(token))) {
+        if (token != null) {
             try {
-                String email = jwtTokenProvider.getEmailFromToken(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                Claims claims = jwtTokenProvider.getClaims(token);
+                String jti = claims.getId();
+                String email = claims.getSubject();
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                if (jti != null && !revokedAccessTokenService.isRevoked(jti)) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             } catch (RuntimeException e) {
                 log.warn("Could not set admin authentication from cookie: {}", e.getMessage());
                 SecurityContextHolder.clearContext();

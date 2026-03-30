@@ -80,7 +80,7 @@ public class JwtTokenProvider {
     }
 
     // Parse 1 lần, tái sử dụng cho getEmail / getJti / getExpiration
-    private Claims getClaims(String token) {
+    public Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()

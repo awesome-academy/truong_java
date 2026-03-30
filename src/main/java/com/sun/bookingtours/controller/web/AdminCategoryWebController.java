@@ -28,10 +28,13 @@ public class AdminCategoryWebController {
 
     private final CategoryService categoryService;
 
+    record CategoryFlatItem(String id, String name, String slug, boolean active, int depth, boolean hasChildren) {}
+    record CategoryOption(String id, String label) {}
+
     @GetMapping
     public String list(Model model) {
         List<CategoryResponse> tree = categoryService.getTree();
-        List<Map<String, Object>> flatList = new ArrayList<>();
+        List<CategoryFlatItem> flatList = new ArrayList<>();
         flattenTree(tree, flatList, 0);
 
         model.addAttribute("categories", flatList);
@@ -41,7 +44,8 @@ public class AdminCategoryWebController {
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        List<Map<String, Object>> parentOptions = buildParentOptions(null);
+        List<CategoryOption> parentOptions = new ArrayList<>();
+        buildOptions(categoryService.getTree(), parentOptions, 0, null);
         model.addAttribute("parentOptions", parentOptions);
         model.addAttribute("category", Map.of("id", "", "name", "", "slug", "",
                 "description", "", "imageUrl", "", "parentId", ""));
@@ -53,13 +57,19 @@ public class AdminCategoryWebController {
     @PostMapping
     public String create(@Valid @ModelAttribute CategoryRequest request,
                          BindingResult bindingResult,
+                         Model model,
                          RedirectAttributes redirectAttrs) {
         if (bindingResult.hasErrors()) {
-            redirectAttrs.addFlashAttribute("errorMessage",
-                    bindingResult.getFieldErrors().stream()
-                            .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                            .findFirst().orElse("Dữ liệu không hợp lệ."));
-            return "redirect:/admin/categories/new";
+            List<CategoryOption> parentOptions = new ArrayList<>();
+            buildOptions(categoryService.getTree(), parentOptions, 0, null);
+            model.addAttribute("parentOptions", parentOptions);
+            model.addAttribute("category", formDataFrom("", request));
+            model.addAttribute("isEdit", false);
+            model.addAttribute("currentPage", "categories");
+            model.addAttribute("errorMessage", bindingResult.getFieldErrors().stream()
+                    .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                    .findFirst().orElse("Dữ liệu không hợp lệ."));
+            return "admin/categories/form";
         }
         try {
             categoryService.create(request);
@@ -75,7 +85,7 @@ public class AdminCategoryWebController {
         Map<String, Object> category = categoryService.getCategoryForEdit(id);
         // getTree() được gọi 1 lần duy nhất, dùng chung cho cả build options
         List<CategoryResponse> tree = categoryService.getTree();
-        List<Map<String, Object>> parentOptions = new ArrayList<>();
+        List<CategoryOption> parentOptions = new ArrayList<>();
         buildOptions(tree, parentOptions, 0, id.toString());
         model.addAttribute("category", category);
         model.addAttribute("parentOptions", parentOptions);
@@ -88,13 +98,19 @@ public class AdminCategoryWebController {
     public String update(@PathVariable UUID id,
                          @Valid @ModelAttribute CategoryRequest request,
                          BindingResult bindingResult,
+                         Model model,
                          RedirectAttributes redirectAttrs) {
         if (bindingResult.hasErrors()) {
-            redirectAttrs.addFlashAttribute("errorMessage",
-                    bindingResult.getFieldErrors().stream()
-                            .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                            .findFirst().orElse("Dữ liệu không hợp lệ."));
-            return "redirect:/admin/categories/" + id + "/edit";
+            List<CategoryOption> parentOptions = new ArrayList<>();
+            buildOptions(categoryService.getTree(), parentOptions, 0, id.toString());
+            model.addAttribute("parentOptions", parentOptions);
+            model.addAttribute("category", formDataFrom(id.toString(), request));
+            model.addAttribute("isEdit", true);
+            model.addAttribute("currentPage", "categories");
+            model.addAttribute("errorMessage", bindingResult.getFieldErrors().stream()
+                    .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                    .findFirst().orElse("Dữ liệu không hợp lệ."));
+            return "admin/categories/form";
         }
         try {
             categoryService.update(id, request);
@@ -120,42 +136,47 @@ public class AdminCategoryWebController {
 
     // Flatten cây category → list phẳng với field depth để render indent trong template.
     // Tránh đệ quy trong Thymeleaf vì template recursion phức tạp và dễ lỗi.
-    private void flattenTree(List<CategoryResponse> nodes, List<Map<String, Object>> result, int depth) {
+    private void flattenTree(List<CategoryResponse> nodes, List<CategoryFlatItem> result, int depth) {
         for (CategoryResponse cat : nodes) {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", cat.getId().toString());
-            m.put("name", cat.getName());
-            m.put("slug", cat.getSlug());
-            m.put("active", cat.isActive());
-            m.put("depth", depth);
-            m.put("hasChildren", cat.getChildren() != null && !cat.getChildren().isEmpty());
-            result.add(m);
+            result.add(new CategoryFlatItem(
+                    cat.getId().toString(),
+                    cat.getName(),
+                    cat.getSlug(),
+                    cat.isActive(),
+                    depth,
+                    cat.getChildren() != null && !cat.getChildren().isEmpty()
+            ));
             if (cat.getChildren() != null) {
                 flattenTree(cat.getChildren(), result, depth + 1);
             }
         }
     }
 
-    // Build flat list cho dropdown chọn parent. excludeId để tránh category tự chọn mình làm cha.
-    private List<Map<String, Object>> buildParentOptions(String excludeId) {
-        List<CategoryResponse> tree = categoryService.getTree();
-        List<Map<String, Object>> options = new ArrayList<>();
-        buildOptions(tree, options, 0, excludeId);
-        return options;
-    }
-
-    private void buildOptions(List<CategoryResponse> nodes, List<Map<String, Object>> result,
+    private void buildOptions(List<CategoryResponse> nodes, List<CategoryOption> result,
                               int depth, String excludeId) {
         for (CategoryResponse cat : nodes) {
             if (cat.getId().toString().equals(excludeId)) continue; // bỏ chính nó
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", cat.getId().toString());
             // Thêm indent vào tên để dropdown dễ đọc
-            m.put("label", "—".repeat(depth) + " " + cat.getName());
-            result.add(m);
+            result.add(new CategoryOption(
+                    cat.getId().toString(),
+                    "—".repeat(depth) + " " + cat.getName()
+            ));
             if (cat.getChildren() != null) {
                 buildOptions(cat.getChildren(), result, depth + 1, excludeId);
             }
         }
+    }
+
+    // Build Map category để truyền vào form khi validation fail — giữ lại data user đã nhập.
+    // parentId được convert sang String để Thymeleaf so sánh đúng với opt.id (cũng là String).
+    private Map<String, Object> formDataFrom(String id, CategoryRequest request) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", id);
+        m.put("name", request.getName() != null ? request.getName() : "");
+        m.put("slug", request.getSlug() != null ? request.getSlug() : "");
+        m.put("description", request.getDescription() != null ? request.getDescription() : "");
+        m.put("imageUrl", request.getImageUrl() != null ? request.getImageUrl() : "");
+        m.put("parentId", request.getParentId() != null ? request.getParentId().toString() : "");
+        return m;
     }
 }

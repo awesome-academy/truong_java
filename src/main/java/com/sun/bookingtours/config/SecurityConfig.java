@@ -44,7 +44,7 @@ public class SecurityConfig {
                 // REST API dùng JWT nên không cần CSRF. Admin UI dùng cookie → cần CSRF.
                 // CookieCsrfTokenRepository hoạt động với STATELESS session (không cần HttpSession).
                 // Thymeleaf tự inject _csrf hidden field vào mọi form có th:action.
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRepository(new CookieCsrfTokenRepository())
                 .ignoringRequestMatchers("/api/**"))
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

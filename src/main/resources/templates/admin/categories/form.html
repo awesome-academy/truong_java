@@ -19,8 +19,8 @@
 
         <div class="p-4" style="max-width:680px">
             <div class="d-flex align-items-center gap-3 mb-4">
-                <a th:href="@{/admin/categories}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i>
+                <a th:href="@{/admin/categories}" class="btn btn-sm btn-outline-secondary" aria-label="Quay lại danh sách category">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 </a>
                 <h5 class="fw-bold mb-0" th:text="${isEdit} ? 'Sửa Category' : 'Thêm Category mới'"></h5>
             </div>

@@ -3,6 +3,8 @@ package com.sun.bookingtours.service;
 import com.sun.bookingtours.entity.RevokedAccessToken;
 import com.sun.bookingtours.repository.RevokedAccessTokenRepository;
 import com.sun.bookingtours.security.JwtTokenProvider;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,9 +24,19 @@ public class RevokedAccessTokenService {
     // Gọi khi admin logout: lưu jti vào bảng để filter từ chối token này về sau
     @Transactional
     public void revoke(String token) {
-        String jti = jwtTokenProvider.getJtiFromToken(token);
-        LocalDateTime expiresAt = jwtTokenProvider.getExpirationFromToken(token);
-        repo.save(new RevokedAccessToken(jti, expiresAt));
+        try {
+            Claims claims = jwtTokenProvider.getClaims(token);
+            String jti = claims.getId();
+            if (jti == null || jti.isBlank()) {
+                log.warn("Attempted to revoke a token without a valid jti; skipping revoke operation");
+                return;
+            }
+            LocalDateTime expiresAt = claims.getExpiration().toInstant()
+                    .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+            repo.save(new RevokedAccessToken(jti, expiresAt));
+        } catch (JwtException e) {
+            log.warn("Attempted to revoke an invalid token; skipping revoke operation: {}", e.getMessage());
+        }
     }
 
     // Filter gọi method này sau khi verify chữ ký để check token có bị revoke không

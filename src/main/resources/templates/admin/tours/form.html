@@ -20,8 +20,9 @@
         <div class="p-4" style="max-width:760px">
             <div class="d-flex align-items-center gap-3 mb-4">
                 <a th:href="${isEdit} ? @{/admin/tours/{id}(id=${tour.id})} : @{/admin/tours}"
-                   class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i>
+                   class="btn btn-sm btn-outline-secondary"
+                   th:aria-label="${isEdit} ? 'Quay lại chi tiết tour' : 'Quay lại danh sách tour'">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 </a>
                 <h5 class="fw-bold mb-0" th:text="${isEdit} ? 'Sửa Tour' : 'Thêm Tour mới'"></h5>
             </div>
@@ -59,7 +60,7 @@
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Giá cơ bản (VNĐ) <span class="text-danger">*</span></label>
                                 <input type="number" name="basePrice" class="form-control"
-                                       th:value="${tour.basePrice}" min="0" step="1000" required>
+                                       th:value="${tour.basePrice}" min="1" step="1000" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-medium">Số ngày <span class="text-danger">*</span></label>

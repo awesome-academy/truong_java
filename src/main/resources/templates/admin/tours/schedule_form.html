@@ -22,8 +22,8 @@
 
         <div class="p-4" style="max-width:560px">
             <div class="d-flex align-items-center gap-3 mb-4">
-                <a th:href="@{/admin/tours/{id}(id=${tourId})}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i>
+                <a th:href="@{/admin/tours/{id}(id=${tourId})}" class="btn btn-sm btn-outline-secondary" aria-label="Quay lại chi tiết tour">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
                 </a>
                 <h5 class="fw-bold mb-0" th:text="${isEdit} ? 'Sửa lịch khởi hành' : 'Thêm lịch khởi hành'"></h5>
             </div>
@@ -63,7 +63,7 @@
                             <div class="col-6">
                                 <label class="form-label fw-medium">Giá riêng (VNĐ)</label>
                                 <input type="number" name="priceOverride" class="form-control"
-                                       th:value="${schedule.priceOverride}" min="0" step="1000"
+                                       th:value="${schedule.priceOverride}" min="1" step="1000"
                                        placeholder="Để trống = dùng giá tour">
                             </div>
                         </div>
