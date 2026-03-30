@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head('Chi tiết User')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item">
+                        <a th:href="@{/admin/users}" class="text-decoration-none">Quản lý Users</a>
+                    </li>
+                    <li class="breadcrumb-item active" th:text="${user.fullName != null ? user.fullName : user.email}"></li>
+                </ol>
+            </nav>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
+        </div>
+
+        <div class="p-4">
+
+            <!-- Flash message -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-check-circle-fill"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <a th:href="@{/admin/users}" class="btn btn-sm btn-outline-secondary" aria-label="Quay lại danh sách user">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                </a>
+                <h5 class="fw-bold mb-0">Chi tiết User</h5>
+            </div>
+
+            <div class="row g-4">
+
+                <!-- Thông tin user -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-4">
+                                <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center mx-auto mb-3"
+                                     style="width:72px;height:72px">
+                                    <i class="bi bi-person fs-2 text-secondary"></i>
+                                </div>
+                                <h6 class="fw-bold mb-1" th:text="${user.fullName != null ? user.fullName : '(chưa cập nhật)'}"></h6>
+                                <div class="text-muted small" th:text="${user.email}"></div>
+                                <div class="mt-2 d-flex justify-content-center gap-2">
+                                    <span th:class="${user.role == 'ADMIN'} ? 'badge bg-danger' : 'badge bg-secondary'"
+                                          th:text="${user.role}"></span>
+                                    <span th:class="${user.active} ? 'badge bg-success' : 'badge bg-warning text-dark'"
+                                          th:text="${user.active} ? 'Hoạt động' : 'Bị khóa'"></span>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <dl class="row small mb-0">
+                                <dt class="col-5 text-muted">ID</dt>
+                                <dd class="col-7 text-truncate" th:text="${user.id}" style="font-size:.75rem"></dd>
+                                <dt class="col-5 text-muted">Điện thoại</dt>
+                                <dd class="col-7" th:text="${user.phone != null ? user.phone : '—'}"></dd>
+                                <dt class="col-5 text-muted">Ngày tạo</dt>
+                                <dd class="col-7" th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy HH:mm')}"></dd>
+                            </dl>
+
+                            <hr>
+
+                            <div th:if="${user.active}">
+                                <form th:action="@{/admin/users/{id}/deactivate(id=${user.id})}" method="post">
+                                    <button type="submit" class="btn btn-warning w-100 btn-sm"
+                                            onclick="return confirm('Bạn có chắc muốn khóa tài khoản này?')">
+                                        <i class="bi bi-lock me-1"></i>Khóa tài khoản
+                                    </button>
+                                </form>
+                            </div>
+                            <div th:unless="${user.active}">
+                                <form th:action="@{/admin/users/{id}/activate(id=${user.id})}" method="post">
+                                    <button type="submit" class="btn btn-success w-100 btn-sm">
+                                        <i class="bi bi-unlock me-1"></i>Kích hoạt tài khoản
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bookings gần đây -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-transparent border-bottom py-3">
+                            <h6 class="fw-semibold mb-0"><i class="bi bi-calendar-check me-2"></i>Bookings gần đây</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Booking Code</th>
+                                        <th>Tour</th>
+                                        <th>Ngày đi</th>
+                                        <th>Số người</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${user.recentBookings.empty}">
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox me-1"></i>Chưa có booking nào
+                                        </td>
+                                    </tr>
+                                    <tr th:each="booking : ${user.recentBookings}">
+                                        <td class="small fw-medium" th:text="${booking.bookingCode}"></td>
+                                        <td class="small" th:text="${booking.tourTitle}"></td>
+                                        <td class="small text-muted"
+                                            th:text="${#temporals.format(booking.departureDate, 'dd/MM/yyyy')}"></td>
+                                        <td class="small text-center" th:text="${booking.numParticipants}"></td>
+                                        <td class="small"
+                                            th:text="${#numbers.formatDecimal(booking.totalAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}"></td>
+                                        <td>
+                                            <span th:text="${booking.status}"
+                                                  th:class="${booking.status == 'CONFIRMED'} ? 'badge bg-success-subtle text-success border border-success-subtle'
+                                                           : (${booking.status == 'CANCELLED'} ? 'badge bg-danger-subtle text-danger border border-danger-subtle'
+                                                           : (${booking.status == 'COMPLETED'} ? 'badge bg-primary-subtle text-primary border border-primary-subtle'
+                                                           : 'badge bg-warning-subtle text-warning border border-warning-subtle'))">
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

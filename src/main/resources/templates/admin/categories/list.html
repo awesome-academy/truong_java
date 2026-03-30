@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head('Categories')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item active">Categories</li>
+                </ol>
+            </nav>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
+        </div>
+
+        <div class="p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Quản lý Categories</h5>
+                <a th:href="@{/admin/categories/new}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>Thêm category
+                </a>
+            </div>
+
+            <!-- Flash messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show py-2" role="alert">
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show py-2" role="alert">
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Tên</th>
+                                <th>Slug</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end pe-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${categories.empty}">
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>Chưa có category nào
+                                </td>
+                            </tr>
+                            <tr th:each="cat : ${categories}">
+                                <td class="ps-4">
+                                    <!-- Indent theo depth để thể hiện cấu trúc cây -->
+                                    <span th:style="${'padding-left: ' + (cat.depth * 20) + 'px'}">
+                                        <i th:if="${cat.hasChildren}" class="bi bi-folder2 text-warning me-1"></i>
+                                        <i th:unless="${cat.hasChildren}" class="bi bi-tag text-secondary me-1"></i>
+                                        <span th:text="${cat.name}"></span>
+                                    </span>
+                                </td>
+                                <td class="text-muted small" th:text="${cat.slug}"></td>
+                                <td>
+                                    <span th:class="${cat.active} ? 'badge bg-success-subtle text-success border border-success-subtle'
+                                                                  : 'badge bg-danger-subtle text-danger border border-danger-subtle'"
+                                          th:text="${cat.active} ? 'Active' : 'Inactive'"></span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a th:href="@{/admin/categories/{id}/edit(id=${cat.id})}"
+                                       class="btn btn-sm btn-outline-primary me-1">Sửa</a>
+                                    <form th:if="${cat.active}"
+                                          th:action="@{/admin/categories/{id}/deactivate(id=${cat.id})}"
+                                          method="post" class="d-inline"
+                                          onsubmit="return confirm('Deactivate category này?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Deactivate</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

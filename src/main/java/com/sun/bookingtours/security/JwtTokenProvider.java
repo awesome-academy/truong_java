@@ -1,5 +1,6 @@
 package com.sun.bookingtours.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -13,7 +14,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -43,6 +47,7 @@ public class JwtTokenProvider {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString()) // jti — UUID duy nhất mỗi token, dùng để revoke khi logout
                 .subject(userPrincipal.getEmail())
                 .claim("userId", userPrincipal.getId())
                 .claim("role", userPrincipal.getRole())
@@ -62,12 +67,25 @@ public class JwtTokenProvider {
     }
 
     public String getEmailFromToken(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    public String getJtiFromToken(String token) {
+        return getClaims(token).getId();
+    }
+
+    public LocalDateTime getExpirationFromToken(String token) {
+        Date exp = getClaims(token).getExpiration();
+        return exp.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    // Parse 1 lần, tái sử dụng cho getEmail / getJti / getExpiration
+    public Claims getClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+                .getPayload();
     }
 
     public boolean validateToken(String token) {

@@ -1,5 +1,17 @@
 package com.sun.bookingtours.service;
 
+import java.math.BigDecimal;
+import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sun.bookingtours.dto.request.TourImageRequest;
 import com.sun.bookingtours.dto.request.TourLinksRequest;
 import com.sun.bookingtours.dto.request.TourRequest;
@@ -15,19 +27,15 @@ import com.sun.bookingtours.exception.BusinessException;
 import com.sun.bookingtours.exception.ResourceNotFoundException;
 import com.sun.bookingtours.mapper.TourMapper;
 import com.sun.bookingtours.mapper.TourScheduleMapper;
-import com.sun.bookingtours.repository.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.sun.bookingtours.repository.CategoryRepository;
+import com.sun.bookingtours.repository.FoodRepository;
+import com.sun.bookingtours.repository.PlaceRepository;
+import com.sun.bookingtours.repository.TourImageRepository;
+import com.sun.bookingtours.repository.TourRepository;
+import com.sun.bookingtours.repository.TourScheduleRepository;
+import com.sun.bookingtours.repository.TourSpecification;
 
-import java.math.BigDecimal;
-import java.text.Normalizer;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -166,6 +174,35 @@ public class TourService {
         }
         tour.setFoods(foods);
         return tourMapper.toResponse(tour);
+    }
+
+    // ---- Admin API ----
+
+    @Transactional(readOnly = true)
+    public Page<TourResponse> adminList(TourStatus status, Pageable pageable) {
+        // Hiển thị tất cả tour chưa bị xóa, filter thêm status nếu có
+        Specification<Tour> spec = (root, query, cb) -> cb.isNull(root.get("deletedAt"));
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        return tourRepository.findAll(spec, pageable).map(tourMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public TourResponse getAdminDetail(UUID id) {
+        Tour tour = findById(id);
+        if (tour.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Tour not found with id: ", id);
+        }
+        TourResponse response = tourMapper.toResponse(tour);
+        // Admin cần thấy TẤT CẢ schedules, không chỉ OPEN như public API
+        List<TourScheduleResponse> schedules = scheduleRepository
+                .findByTourId(tour.getId())
+                .stream()
+                .map(scheduleMapper::toResponse)
+                .toList();
+        response.setSchedules(schedules);
+        return response;
     }
 
     // ---- Public API (Guest + User) ----

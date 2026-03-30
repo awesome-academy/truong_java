@@ -70,6 +70,40 @@ public class TourScheduleService {
         return scheduleMapper.toResponse(schedule);
     }
 
+    @Transactional(readOnly = true)
+    public TourScheduleResponse getDetail(UUID scheduleId) {
+        return scheduleMapper.toResponse(findById(scheduleId));
+    }
+
+    // Web UI: validate schedule thực sự thuộc tour trước khi trả về — ngăn IDOR
+    @Transactional(readOnly = true)
+    public TourScheduleResponse getDetailForTour(UUID tourId, UUID scheduleId) {
+        TourSchedule schedule = findById(scheduleId);
+        if (!schedule.getTour().getId().equals(tourId)) {
+            throw new ResourceNotFoundException("TourSchedule", scheduleId);
+        }
+        return scheduleMapper.toResponse(schedule);
+    }
+
+    // Web UI: validate + update trong 1 DB round-trip
+    @Transactional
+    public TourScheduleResponse updateForTour(UUID tourId, UUID scheduleId, TourScheduleRequest request) {
+        TourSchedule schedule = findById(scheduleId);
+        if (!schedule.getTour().getId().equals(tourId)) {
+            throw new ResourceNotFoundException("TourSchedule", scheduleId);
+        }
+        schedule.setDepartureDate(request.departureDate());
+        schedule.setReturnDate(request.returnDate());
+        schedule.setTotalSlots(request.totalSlots());
+        schedule.setPriceOverride(request.priceOverride());
+        return scheduleMapper.toResponse(schedule);
+    }
+
+    @Transactional(readOnly = true)
+    public UUID getTourId(UUID scheduleId) {
+        return findById(scheduleId).getTour().getId();
+    }
+
     // ---- private helpers ----
 
     private TourSchedule findById(UUID id) {

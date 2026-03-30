@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head(${isEdit} ? 'Sửa Tour' : 'Thêm Tour')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item"><a th:href="@{/admin/tours}" class="text-decoration-none">Tours</a></li>
+                    <li class="breadcrumb-item active" th:text="${isEdit} ? 'Sửa' : 'Thêm mới'"></li>
+                </ol>
+            </nav>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
+        </div>
+
+        <div class="p-4" style="max-width:760px">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <a th:href="${isEdit} ? @{/admin/tours/{id}(id=${tour.id})} : @{/admin/tours}"
+                   class="btn btn-sm btn-outline-secondary"
+                   th:aria-label="${isEdit} ? 'Quay lại chi tiết tour' : 'Quay lại danh sách tour'">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                </a>
+                <h5 class="fw-bold mb-0" th:text="${isEdit} ? 'Sửa Tour' : 'Thêm Tour mới'"></h5>
+            </div>
+
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show py-2">
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form th:action="${isEdit} ? @{/admin/tours/{id}/edit(id=${tour.id})} : @{/admin/tours}"
+                          method="post">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-medium">Tên tour <span class="text-danger">*</span></label>
+                                <input type="text" name="title" class="form-control"
+                                       th:value="${tour.title}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">Slug</label>
+                                <input type="text" name="slug" class="form-control"
+                                       th:value="${tour.slug}" placeholder="Tự sinh từ tên">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Mô tả</label>
+                            <textarea name="description" class="form-control" rows="4"
+                                      th:text="${tour.description}"></textarea>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">Giá cơ bản (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" name="basePrice" class="form-control"
+                                       th:value="${tour.basePrice}" min="1" step="1000" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">Số ngày <span class="text-danger">*</span></label>
+                                <input type="number" name="durationDays" class="form-control"
+                                       th:value="${tour.durationDays}" min="1" max="365" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">Số chỗ tối đa <span class="text-danger">*</span></label>
+                                <input type="number" name="maxParticipants" class="form-control"
+                                       th:value="${tour.maxParticipants}" min="1" max="500" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Điểm khởi hành</label>
+                                <input type="text" name="departureLocation" class="form-control"
+                                       th:value="${tour.departureLocation}" placeholder="Hà Nội, TP.HCM...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">Category</label>
+                                <select name="categoryId" class="form-select">
+                                    <option value="">— Không phân loại —</option>
+                                    <option th:each="opt : ${categoryOptions}"
+                                            th:value="${opt.id}"
+                                            th:text="${opt.label}"
+                                            th:selected="${opt.id == tour.categoryId}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">URL ảnh thumbnail</label>
+                            <input type="text" name="thumbnailUrl" class="form-control"
+                                   th:value="${tour.thumbnailUrl}" placeholder="https://...">
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-check-lg me-1"></i>
+                                <span th:text="${isEdit} ? 'Cập nhật' : 'Tạo mới'"></span>
+                            </button>
+                            <a th:href="${isEdit} ? @{/admin/tours/{id}(id=${tour.id})} : @{/admin/tours}"
+                               class="btn btn-outline-secondary">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

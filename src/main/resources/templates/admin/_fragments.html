@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' - SUN Admin'">SUN Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body { background: #f1f5f9; }
+        #sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: #1e293b;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-brand { padding: 20px 16px 14px; border-bottom: 1px solid #334155; }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            margin: 2px 8px;
+            font-size: 0.9rem;
+            transition: background 0.15s, color 0.15s;
+        }
+        .sidebar-link:hover { color: #fff; background: #334155; }
+        .sidebar-link.active { color: #fff; background: #3b82f6; }
+        .sidebar-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #475569; padding: 14px 16px 4px; }
+        #main { flex: 1; min-width: 0; }
+        .top-bar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 10px 24px; position: sticky; top: 0; z-index: 100; }
+    </style>
+</head>
+<body>
+
+<aside th:fragment="sidebar(currentPage)" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="text-white fw-bold fs-5">SUN Admin</div>
+        <div class="text-secondary" style="font-size:.75rem">Booking Tours</div>
+    </div>
+    <div class="pt-2">
+        <div class="sidebar-section">Menu</div>
+        <a th:href="@{/admin/dashboard}"
+           th:class="${currentPage == 'dashboard'} ? 'sidebar-link active' : 'sidebar-link'">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a th:href="@{/admin/users}"
+           th:class="${currentPage == 'users'} ? 'sidebar-link active' : 'sidebar-link'">
+            <i class="bi bi-people"></i> Quản lý Users
+        </a>
+        <a th:href="@{/admin/categories}"
+           th:class="${currentPage == 'categories'} ? 'sidebar-link active' : 'sidebar-link'">
+            <i class="bi bi-tags"></i> Categories
+        </a>
+        <a th:href="@{/admin/tours}"
+           th:class="${currentPage == 'tours'} ? 'sidebar-link active' : 'sidebar-link'">
+            <i class="bi bi-map"></i> Quản lý Tours
+        </a>
+        <span class="sidebar-link text-secondary opacity-50" style="cursor:not-allowed">
+            <i class="bi bi-calendar-check"></i> Bookings
+        </span>
+        <span class="sidebar-link text-secondary opacity-50" style="cursor:not-allowed">
+            <i class="bi bi-star"></i> Reviews
+        </span>
+        <span class="sidebar-link text-secondary opacity-50" style="cursor:not-allowed">
+            <i class="bi bi-bar-chart"></i> Doanh thu
+        </span>
+    </div>
+</aside>
+
+<div th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<div th:fragment="logoutBtn">
+    <form th:action="@{/admin/logout}" method="post" class="d-inline m-0">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
+        </button>
+    </form>
+</div>
+
+</body>
+</html>

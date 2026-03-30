@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head('Quản lý Users')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item active">Quản lý Users</li>
+                </ol>
+            </nav>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
+        </div>
+
+        <div class="p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Quản lý Users</h5>
+                <span class="text-muted small">Tổng: <strong th:text="${users.totalElements}">0</strong> users</span>
+            </div>
+
+            <!-- Bộ lọc -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/users}" method="get" class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-medium mb-1">Tìm kiếm</label>
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                   placeholder="Tên, email..." th:value="${search}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-medium mb-1">Role</label>
+                            <select name="role" class="form-select form-select-sm">
+                                <option value="">Tất cả</option>
+                                <option value="ADMIN" th:selected="${role == 'ADMIN'}">ADMIN</option>
+                                <option value="USER"  th:selected="${role == 'USER'}">USER</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-medium mb-1">Trạng thái</label>
+                            <select name="isActive" class="form-select form-select-sm">
+                                <option value="">Tất cả</option>
+                                <option value="true"  th:selected="${isActive == true}">Hoạt động</option>
+                                <option value="false" th:selected="${isActive == false}">Bị khóa</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary btn-sm px-3">
+                                <i class="bi bi-search me-1"></i>Lọc
+                            </button>
+                            <a th:href="@{/admin/users}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bảng users -->
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Họ tên</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-end pe-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${users.content.empty}">
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                    Không có users nào
+                                </td>
+                            </tr>
+                            <tr th:each="user : ${users.content}">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-secondary bg-opacity-10 d-flex align-items-center justify-content-center"
+                                             style="width:36px;height:36px;flex-shrink:0">
+                                            <i class="bi bi-person text-secondary"></i>
+                                        </div>
+                                        <span th:text="${user.fullName != null ? user.fullName : '(chưa cập nhật)'}"></span>
+                                    </div>
+                                </td>
+                                <td th:text="${user.email}"></td>
+                                <td>
+                                    <span th:class="${user.role == 'ADMIN'} ? 'badge bg-danger' : 'badge bg-secondary'"
+                                          th:text="${user.role}"></span>
+                                </td>
+                                <td>
+                                    <span th:class="${user.active} ? 'badge bg-success-subtle text-success border border-success-subtle'
+                                                                   : 'badge bg-warning-subtle text-warning border border-warning-subtle'"
+                                          th:text="${user.active} ? 'Hoạt động' : 'Bị khóa'"></span>
+                                </td>
+                                <td class="text-muted small"
+                                    th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}"></td>
+                                <td class="text-end pe-4">
+                                    <a th:href="@{/admin/users/{id}(id=${user.id})}"
+                                       class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3"
+                     th:if="${users.totalPages > 1}">
+                    <span class="text-muted small">
+                        Trang <strong th:text="${users.number + 1}"></strong> /
+                        <strong th:text="${users.totalPages}"></strong>
+                    </span>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" th:classappend="${!users.hasPrevious()} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/admin/users(page=${users.number - 1},size=${users.size},search=${search},role=${role},isActive=${isActive})}">&laquo;</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(
+                                    T(java.lang.Math).max(0, users.number - 2),
+                                    T(java.lang.Math).min(users.totalPages - 1, users.number + 2))}"
+                                th:classappend="${i == users.number} ? 'active'">
+                                <a class="page-link" th:text="${i + 1}"
+                                   th:href="@{/admin/users(page=${i},size=${users.size},search=${search},role=${role},isActive=${isActive})}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${!users.hasNext()} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/admin/users(page=${users.number + 1},size=${users.size},search=${search},role=${role},isActive=${isActive})}">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

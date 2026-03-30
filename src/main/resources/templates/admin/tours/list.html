@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{admin/_fragments :: head('Quản lý Tours')}"></head>
+<body>
+<div class="d-flex">
+
+    <div th:replace="~{admin/_fragments :: sidebar(${currentPage})}"></div>
+
+    <div id="main" class="flex-fill">
+        <div class="top-bar d-flex justify-content-between align-items-center">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item active">Quản lý Tours</li>
+                </ol>
+            </nav>
+            <div th:replace="~{admin/_fragments :: logoutBtn}"></div>
+        </div>
+
+        <div class="p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0">Quản lý Tours</h5>
+                <a th:href="@{/admin/tours/new}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>Thêm tour
+                </a>
+            </div>
+
+            <!-- Flash messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show py-2">
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show py-2">
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Filter -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form th:action="@{/admin/tours}" method="get" class="row g-2 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-medium mb-1">Trạng thái</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="">Tất cả</option>
+                                <option value="DRAFT"    th:selected="${status == 'DRAFT'}">DRAFT</option>
+                                <option value="ACTIVE"   th:selected="${status == 'ACTIVE'}">ACTIVE</option>
+                                <option value="INACTIVE" th:selected="${status == 'INACTIVE'}">INACTIVE</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary btn-sm px-3">
+                                <i class="bi bi-funnel me-1"></i>Lọc
+                            </button>
+                            <a th:href="@{/admin/tours}" class="btn btn-outline-secondary btn-sm ms-1">Reset</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Tên tour</th>
+                                <th>Category</th>
+                                <th>Giá từ</th>
+                                <th>Số ngày</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-end pe-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${tours.content.empty}">
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>Không có tour nào
+                                </td>
+                            </tr>
+                            <tr th:each="tour : ${tours.content}">
+                                <td class="ps-4 fw-medium" th:text="${tour.title}"></td>
+                                <td class="text-muted small" th:text="${tour.categoryName}"></td>
+                                <td class="text-muted small" th:text="${#numbers.formatDecimal(tour.basePrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                                <td class="text-center" th:text="${tour.durationDays} + ' ngày'"></td>
+                                <td>
+                                    <span th:class="${tour.status == 'ACTIVE'}   ? 'badge bg-success-subtle text-success border border-success-subtle' :
+                                                    (${tour.status == 'DRAFT'}   ? 'badge bg-secondary-subtle text-secondary border border-secondary-subtle' :
+                                                                                   'badge bg-warning-subtle text-warning border border-warning-subtle')"
+                                          th:text="${tour.status}"></span>
+                                </td>
+                                <td class="text-muted small"
+                                    th:text="${#temporals.format(tour.createdAt, 'dd/MM/yyyy')}"></td>
+                                <td class="text-end pe-4">
+                                    <a th:href="@{/admin/tours/{id}(id=${tour.id})}"
+                                       class="btn btn-sm btn-outline-primary">Chi tiết</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="card-footer bg-transparent d-flex justify-content-between align-items-center py-3"
+                     th:if="${tours.totalPages > 1}">
+                    <span class="text-muted small">
+                        Trang <strong th:text="${tours.number + 1}"></strong> /
+                        <strong th:text="${tours.totalPages}"></strong>
+                        &nbsp;·&nbsp; Tổng <strong th:text="${tours.totalElements}"></strong> tours
+                    </span>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item" th:classappend="${!tours.hasPrevious()} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/admin/tours(page=${tours.number - 1},size=${tours.size},status=${status})}">&laquo;</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(
+                                    T(java.lang.Math).max(0, tours.number - 2),
+                                    T(java.lang.Math).min(tours.totalPages - 1, tours.number + 2))}"
+                                th:classappend="${i == tours.number} ? 'active'">
+                                <a class="page-link" th:text="${i + 1}"
+                                   th:href="@{/admin/tours(page=${i},size=${tours.size},status=${status})}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${!tours.hasNext()} ? 'disabled'">
+                                <a class="page-link"
+                                   th:href="@{/admin/tours(page=${tours.number + 1},size=${tours.size},status=${status})}">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div th:replace="~{admin/_fragments :: scripts}"></div>
+</body>
+</html>

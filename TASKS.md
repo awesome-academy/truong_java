@@ -238,25 +238,25 @@
 > - **Option B**: SPA riêng (React/Vue) gọi vào Admin API
 
 ### T23 — Admin UI Setup
-- [ ] Chọn approach (Thymeleaf hoặc SPA)
-- [ ] Tích hợp template/layout chung: sidebar, header, breadcrumb
-- [ ] Auth guard: redirect về login nếu chưa có JWT
-- [ ] Trang Login admin
+- [x] Chọn approach (Thymeleaf hoặc SPA)
+- [x] Tích hợp template/layout chung: sidebar, header, breadcrumb
+- [x] Auth guard: redirect về login nếu chưa có JWT
+- [x] Trang Login admin
 
 ### T24 — Dashboard
 - [ ] Thống kê nhanh: tổng user, tổng tour, booking hôm nay, doanh thu tháng này
 - [ ] Chart doanh thu theo tuần/tháng
 
 ### T25 — UI: Manage Users
-- [ ] Danh sách users (search, filter, pagination)
-- [ ] Kích hoạt / Khóa tài khoản
-- [ ] Xem chi tiết user
+- [x] Danh sách users (search, filter, pagination)
+- [x] Kích hoạt / Khóa tài khoản
+- [x] Xem chi tiết user
 
 ### T26 — UI: Manage Categories & Tours
-- [ ] CRUD categories (tree view)
-- [ ] CRUD tours (form tạo/sửa tour với upload ảnh)
-- [ ] Quản lý schedules của từng tour
-- [ ] Đổi status tour
+- [x] CRUD categories (tree view)
+- [x] CRUD tours (form tạo/sửa tour với upload ảnh)
+- [x] Quản lý schedules của từng tour
+- [x] Đổi status tour
 
 ### T27 — UI: Manage Bookings
 - [ ] Danh sách bookings (filter status, date)
@@ -353,7 +353,7 @@ Khi tạo project tại [start.spring.io](https://start.spring.io), chọn:
 | 5 — Social | T12, T13, T14, T15, T16 | ✅ |
 | 6 — Content | T17, T18 | ✅ |
 | 7 — Admin API | T19, T20, T21, T22 | ✅ |
-| 8 — Admin UI | T23–T29 | ⬜ |
+| 8 — Admin UI | T23–T29 | ✅ T23 T25 T26 · ⬜ T24 T27 T28 T29 |
 | 9 — Cross-cutting | T30, T31, T32 | ✅ T30 T31 · ⬜ T32 |
 
 > ⬜ Not started · 🔄 In progress · ✅ Done
